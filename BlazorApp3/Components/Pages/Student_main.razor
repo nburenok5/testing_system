@@ -1,0 +1,41 @@
+﻿@page "/student_main/{StudentId:int}"
+@rendermode InteractiveServer
+@inject NavigationManager Navigation
+@using BlazorApp3.Models
+@using BlazorApp3.Components.Models.ModelsDataBases
+@inject DataBaseContext DbContext
+
+@if (student != null)
+{
+    <h3>Добро пожаловать, @student.FullName!</h3>
+    <div class="admin-buttons">
+        <button class="btn btn-primary" @onclick="NavigateToPassingTest">Выбрать тест</button>
+        <button class="btn btn-primary" @onclick="NavigateToTestsResults">Мои результаты</button>
+    </div>
+}
+else
+{
+    <p>Загрузка данных...</p>
+}
+
+@code {
+    [Parameter]
+    public int StudentId { get; set; }
+
+    private Student? student;
+
+    protected override async Task OnInitializedAsync()
+    {
+        student = await DbContext.Students.FindAsync(StudentId);
+    }
+
+    private void NavigateToPassingTest()
+    {
+        Navigation.NavigateTo($"/test_selection/{student.Id}");
+    }
+
+    private void NavigateToTestsResults()
+    {
+        Navigation.NavigateTo($"/student_test_results/{student.Id}");
+    }
+}
