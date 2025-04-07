@@ -1,0 +1,63 @@
+﻿@page "/test_selection/{StudentId:int}"
+@rendermode InteractiveServer
+@using BlazorApp3.Models
+@using Microsoft.EntityFrameworkCore
+@using BlazorApp3.Components.Models.ModelsDataBases
+@inject DataBaseContext DbContext
+@inject NavigationManager Navigation
+
+<h3>Доступные для прохождения тесты</h3>
+
+@if (tests == null)
+{
+    <p>Загрузка тестов...</p>
+}
+else if (!tests.Any())
+{
+    <p>Нет доступных тестов</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Название теста</th>
+            <th>Количество вопросов</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var test in tests)
+        {
+            <tr @onclick="() => StartTest(test.Id)">
+                <td>@test.Name</td>
+                <td>@test.QuestionModels.Count</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<TestModel>? tests;
+
+    [Parameter]
+    public int StudentId { get; set; }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTests();
+    }
+
+    private async Task LoadTests()
+    {
+        tests = await DbContext.Tests
+            .Include(t => t.QuestionModels)
+            .Where(t => t.QuestionModels.Any())
+            .ToListAsync();
+    }
+
+    private void StartTest(int testId)
+    {
+        Navigation.NavigateTo($"/take_test/{testId}/{StudentId}");
+    }
+}

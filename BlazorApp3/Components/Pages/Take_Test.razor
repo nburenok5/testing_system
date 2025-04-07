@@ -1,0 +1,133 @@
+﻿@page "/take_test/{testId:int}/{StudentId:int}"
+@rendermode InteractiveServer
+@using BlazorApp3.Models
+@using BlazorApp3.Components.Models.ModelsDataBases
+@using Microsoft.EntityFrameworkCore
+@inject DataBaseContext DbContext
+@inject NavigationManager Navigation
+
+@if (test == null)
+{
+    <p>Загрузка теста...</p>
+}
+else
+{
+    <div class="test-container">
+        <h3>Тест: @test.Name</h3>
+        
+        @if (currentQuestionIndex >= 0 && currentQuestionIndex < test.QuestionModels.Count)
+        {
+            <div class="question-card">
+                <h4>Вопрос @(currentQuestionIndex + 1) из @test.QuestionModels.Count</h4>
+                <p>@currentQuestion.QuestionText</p>
+                
+                <div class="options-list">
+                    @foreach (var option in currentQuestion.OptionsList.Select((value, index) => new { value, index }))
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" 
+                                   type="radio" 
+                                   name="questionOptions" 
+                                   id="option_@option.index"
+                                   @onchange="() => SelectAnswer(option.index)"
+                                   checked="@(selectedAnswerIndex == option.index)">
+                            <label class="form-check-label" for="option_@option.index">
+                                @option.value
+                            </label>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="navigation-buttons">
+                @if (currentQuestionIndex > 0)
+                {
+                    <button class="btn btn-secondary" @onclick="PrevQuestion">
+                        Назад
+                    </button>
+                }
+                
+                @if (currentQuestionIndex < test.QuestionModels.Count - 1)
+                {
+                    <button class="btn btn-primary" @onclick="NextQuestion" disabled="@(selectedAnswerIndex == -1)">
+                        Далее
+                    </button>
+                }
+                else
+                {
+                    <button class="btn btn-success" @onclick="FinishTest" disabled="@(selectedAnswerIndex == -1)">
+                        Завершить тест
+                    </button>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int testId { get; set; }
+    
+    [Parameter]
+    public int studentId { get; set; }
+
+    private TestModel? test;
+    private int currentQuestionIndex = 0;
+    private QuestionModel currentQuestion => test?.QuestionModels[currentQuestionIndex];
+    private int selectedAnswerIndex = -1;
+    private Dictionary<int, int> answers = new Dictionary<int, int>(); // ключ - индекс вопроса, значение - индекс ответа
+
+    protected override async Task OnInitializedAsync()
+    {
+        test = await DbContext.Tests
+            .Include(t => t.QuestionModels)
+            .FirstOrDefaultAsync(t => t.Id == testId);
+    }
+
+    private void SelectAnswer(int answerIndex)
+    {
+        selectedAnswerIndex = answerIndex;
+        answers[currentQuestionIndex] = answerIndex;
+    }
+
+    private void NextQuestion()
+    {
+        if (currentQuestionIndex < test.QuestionModels.Count - 1)
+        {
+            currentQuestionIndex++;
+            selectedAnswerIndex = answers.TryGetValue(currentQuestionIndex, out var answer) ? answer : -1;
+        }
+    }
+
+    private void PrevQuestion()
+    {
+        if (currentQuestionIndex > 0)
+        {
+            currentQuestionIndex--;
+            selectedAnswerIndex = answers.TryGetValue(currentQuestionIndex, out var answer) ? answer : -1;
+        }
+    }
+
+    private async Task FinishTest()
+    {
+        // Расчет результата
+        int correctAnswers = test.QuestionModels
+            .Where((q, index) => answers.TryGetValue(index, out var answer) && answer == q.CorrectAnswerIndex)
+            .Count();
+        int score = (int)Math.Round((double)correctAnswers / test.QuestionModels.Count * 100);
+
+        // Сохранение результата
+        var result = new TestResult
+        {
+            TestId = testId,
+            StudentId = studentId,
+            Score = score,
+            TestDate = DateTime.UtcNow
+        };
+
+        DbContext.TestResults.Add(result);
+        await DbContext.SaveChangesAsync();
+        
+        Navigation.NavigateTo($"/test_result/{result.Id}/{studentId}");
+    }
+}
