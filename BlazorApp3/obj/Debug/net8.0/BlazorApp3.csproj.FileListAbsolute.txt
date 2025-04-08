@@ -342,3 +342,4 @@ C:\Users\Настя\Downloads\test-sys-app-main\BlazorApp3\obj\Debug\net8.0\refi
 C:\Users\Настя\Downloads\test-sys-app-main\BlazorApp3\obj\Debug\net8.0\BlazorApp3.pdb
 C:\Users\Настя\Downloads\test-sys-app-main\BlazorApp3\obj\Debug\net8.0\BlazorApp3.genruntimeconfig.cache
 C:\Users\Настя\Downloads\test-sys-app-main\BlazorApp3\obj\Debug\net8.0\ref\BlazorApp3.dll
+C:\Users\Настя\Downloads\test-sys-app-main\BlazorApp3\obj\Debug\net8.0\BlazorApp3.sourcelink.json

@@ -3230,30 +3230,25 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\sdahu\\.nuget\\packages\\": {},
-    "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
+    "C:\\Users\\Настя\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\sdahu\\OneDrive\\Рабочий стол\\папки с языками\\C#\\testing_system\\BlazorApp3\\BlazorApp3.csproj",
+      "projectUniqueName": "C:\\Users\\Настя\\Downloads\\test-sys-app-main\\BlazorApp3\\BlazorApp3.csproj",
       "projectName": "BlazorApp3",
-      "projectPath": "C:\\Users\\sdahu\\OneDrive\\Рабочий стол\\папки с языками\\C#\\testing_system\\BlazorApp3\\BlazorApp3.csproj",
-      "packagesPath": "C:\\Users\\sdahu\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\sdahu\\OneDrive\\Рабочий стол\\папки с языками\\C#\\testing_system\\BlazorApp3\\obj\\",
+      "projectPath": "C:\\Users\\Настя\\Downloads\\test-sys-app-main\\BlazorApp3\\BlazorApp3.csproj",
+      "packagesPath": "C:\\Users\\Настя\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Настя\\Downloads\\test-sys-app-main\\BlazorApp3\\obj\\",
       "projectStyle": "PackageReference",
-      "fallbackFolders": [
-        "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-      ],
       "configFilePaths": [
-        "C:\\Users\\sdahu\\AppData\\Roaming\\NuGet\\NuGet.Config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-        "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+        "C:\\Users\\Настя\\AppData\\Roaming\\NuGet\\NuGet.Config"
       ],
       "originalTargetFrameworks": [
         "net8.0"
       ],
       "sources": {
+        "C:\\NuGetPackages": {},
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
         "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
@@ -3313,7 +3308,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.407/PortableRuntimeIdentifierGraph.json"
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.406/PortableRuntimeIdentifierGraph.json"
       }
     }
   }

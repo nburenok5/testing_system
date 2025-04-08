@@ -17,79 +17,79 @@ build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = BlazorApp3
 build_property.RootNamespace = BlazorApp3
-build_property.ProjectDir = C:\Users\sdahu\OneDrive\Рабочий стол\папки с языками\C#\testing_system\BlazorApp3\
+build_property.ProjectDir = C:\Users\Настя\Downloads\test-sys-app-main\BlazorApp3\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 8.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = C:\Users\sdahu\OneDrive\Рабочий стол\папки с языками\C#\testing_system\BlazorApp3
+build_property.MSBuildProjectDirectory = C:\Users\Настя\Downloads\test-sys-app-main\BlazorApp3
 build_property._RazorSourceGeneratorDebug = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/App.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/App.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Admin_main.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Pages/Admin_main.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pbl9tYWluLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Current_Test_Result.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Pages/Current_Test_Result.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDdXJyZW50X1Rlc3RfUmVzdWx0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Error.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Pages/Error.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xFcnJvci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Home.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Pages/Home.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xIb21lLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Login_admin.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Pages/Login_admin.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xMb2dpbl9hZG1pbi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Login_student.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Pages/Login_student.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xMb2dpbl9zdHVkZW50LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Students.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Pages/Students.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTdHVkZW50cy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Students_Test_Results.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Pages/Students_Test_Results.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTdHVkZW50c19UZXN0X1Jlc3VsdHMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Student_main.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Pages/Student_main.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTdHVkZW50X21haW4ucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Take_Test.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Pages/Take_Test.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xUYWtlX1Rlc3QucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Tests.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Pages/Tests.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xUZXN0cy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Test_Selection.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Pages/Test_Selection.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xUZXN0X1NlbGVjdGlvbi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Routes.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Routes.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xSb3V0ZXMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/_Imports.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xfSW1wb3J0cy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Layout/MainLayout.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Layout/MainLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTWFpbkxheW91dC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = b-ey95svnfo8
 
-[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Layout/NavMenu.razor]
+[C:/Users/Настя/Downloads/test-sys-app-main/BlazorApp3/Components/Layout/NavMenu.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcTmF2TWVudS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = b-37imxe00ju
