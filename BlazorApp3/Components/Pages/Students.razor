@@ -6,36 +6,260 @@
 @inject DataBaseContext DbContext
 @inject NavigationManager Navigation
 
-<h3>Список студентов</h3>
-
 <div class="mb-3">
     <button class="btn btn-primary" @onclick="OpenAddStudentModal">Добавить студента</button>
     <button class="btn btn-warning" @onclick="OpenEditStudentModal" disabled="@(selectedStudent == null)">Редактировать</button>
     <button class="btn btn-danger" @onclick="OpenDeleteStudentModal" disabled="@(selectedStudent == null)">Удалить</button>
     <button class="btn btn-info" @onclick="OpenStudentDetailsModal" disabled="@(selectedStudent == null)">Данные</button>
-    <button class="btn btn-secondary" @onclick="OpenResultsModal" disabled="@(selectedStudent == null)">Результаты</button>
+    <button class="btn btn-secondary" @onclick="OpenColumnSelectorModal">Выбрать тесты</button>
+    <button class="btn btn-outline-primary" @onclick="NavigateToAdminMain" >На главную</button>
 </div>
+<style>
+    /* Основные стили страницы */
+    .container {
+        max-width: 1400px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>ФИО</th>
-            <th>Логин</th>
-            <th>Дата рождения</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var student in studentsList)
-        {
-            <tr @onclick="() => SelectStudent(student)" 
-                style="cursor: pointer; @(selectedStudent == student ? "background-color: #f0f0f0;" : "")">
-                <td>@student.FullName</td>
-                <td>@student.Login</td>
-                <td>@student.BirthDate.ToShortDateString()</td>
-            </tr>
+    /* Панель управления */
+    .action-panel {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .action-panel button {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    .action-panel button i {
+        font-size: 1.1rem;
+    }
+
+    .action-panel button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Таблица студентов */
+    .students-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .students-table th {
+        background-color: #3498db;
+        color: white;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+    }
+
+    .students-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s ease;
+    }
+
+    .students-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .students-table tr:hover td {
+        background-color: #f8f9fa;
+    }
+
+    .students-table tr.active td {
+        background-color: #e9f7fe;
+    }
+
+    /* Цвета кнопок */
+    .btn-primary {
+        background-color: #3498db;
+        color: white;
+    }
+
+    .btn-warning {
+        background-color: #f39c12;
+        color: white;
+    }
+
+    .btn-danger {
+        background-color: #e74c3c;
+        color: white;
+    }
+
+    .btn-info {
+        background-color: #17a2b8;
+        color: white;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+        color: white;
+    }
+
+    .btn-outline-primary {
+        background-color: transparent;
+        color: #3498db;
+        border: 1px solid #3498db;
+    }
+
+    /* Модальные окна */
+    .modal-content {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+        border-bottom: none;
+        padding: 1.5rem;
+        background-color: #f8f9fa;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+
+    .modal-title {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        border-top: none;
+        padding: 1rem 1.5rem;
+        background-color: #f8f9fa;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+
+    /* Адаптивность */
+    @@media (max-width: 768px) {
+        .action-panel {
+            flex-direction: column;
         }
-    </tbody>
-</table>
+
+        .action-panel button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    /* Анимации */
+    @@keyframes fadeIn {
+         from { opacity: 0; transform: translateY(10px); }
+         to { opacity: 1; transform: translateY(0); }
+     }
+
+    .modal {
+        animation: fadeIn 0.3s ease-out;
+    }
+</style>
+@if (filteredTests.Any() && allStudents.Any())
+{
+    <div style="overflow-x: auto;">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th style="min-width: 200px;">Студент</th>
+                    @foreach (var test in filteredTests)
+                    {
+                        <th style="text-align: center; min-width: 100px;">@test.Name</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var student in allStudents)
+                {
+                    <tr>
+                        <td @onclick="() => SelectStudent(student)" 
+                            style="cursor: pointer; @(selectedStudent == student ? "background-color: #f0f0f0;" : "")">
+                            @student.FullName
+                        </td>
+                        @foreach (var test in filteredTests)
+                        {
+                            var result = allBestResults
+                                .FirstOrDefault(r => r.StudentId == student.Id && r.TestId == test.Id);
+                            
+                            <td @onclick="() => ShowTestAttempts(student, test)"
+                                style="text-align: center; cursor: pointer; background-color: @GetScoreColor(result?.Score ?? -1)">
+                                @(result?.Score != null ? $"{result.Score}%" : "-")
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <p>Нет данных для отображения</p>
+}
+
+<!-- Модальное окно выбора колонок -->
+@if (showColumnSelectorModal)
+{
+    <div class="modal" style="display: block; background: rgba(0, 0, 0, 0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Выбор отображаемых тестов</h5>
+                    <button type="button" class="close" @onclick="CloseColumnSelectorModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="selectAll" 
+                               checked="@selectAllTests"
+                               @onchange="@((e) => { selectAllTests = (bool)e.Value; ToggleAllTests(); })" />
+                        <label class="form-check-label" for="selectAll">
+                            <strong>Выбрать все</strong>
+                        </label>
+                    </div>
+                    <hr />
+                    @foreach (var test in allTests)
+                    {
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" 
+                                   id="@($"test_{test.Id}")" 
+                                   checked="@IsTestSelected(test.Id)"
+                                   @onchange="@((e) => ToggleTestSelection(test.Id, (bool)e.Value))" />
+                            <label class="form-check-label" for="@($"test_{test.Id}")">
+                                @test.Name
+                            </label>
+                        </div>
+                    }
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" @onclick="ApplyColumnSelection">Применить</button>
+                    <button class="btn btn-secondary" @onclick="CloseColumnSelectorModal">Отмена</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 <!-- Модальное окно добавления студента -->
 @if (showAddStudentModal)
@@ -153,34 +377,32 @@
     </div>
 }
 
-<!-- Модальное окно результатов тестов -->
-@if (showResultsModal && selectedStudent != null)
+<!-- Модальное окно всех попыток по тесту -->
+@if (showTestAttemptsModal && selectedStudent != null && selectedTest != null)
 {
     <div class="modal" style="display: block; background: rgba(0, 0, 0, 0.5);">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Лучшие результаты тестов: @selectedStudent.FullName</h5>
-                    <button type="button" class="close" @onclick="CloseResultsModal">&times;</button>
+                    <h5 class="modal-title">Все попытки: @selectedStudent.FullName - @selectedTest.Name</h5>
+                    <button type="button" class="close" @onclick="CloseTestAttemptsModal">&times;</button>
                 </div>
                 <div class="modal-body">
-                    @if (studentResults.Any())
+                    @if (testAttempts.Any())
                     {
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Тест</th>
-                                    <th>Лучший результат</th>
-                                    <th>Дата получения</th>
+                                    <th>Дата</th>
+                                    <th>Результат</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var result in studentResults.OrderBy(r => r.Test?.Name))
+                                @foreach (var attempt in testAttempts.OrderByDescending(a => a.TestDate))
                                 {
                                     <tr>
-                                        <td>@result.Test?.Name</td>
-                                        <td>@result.Score%</td>
-                                        <td>@result.TestDate.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td>@attempt.TestDate.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td>@attempt.Score%</td>
                                     </tr>
                                 }
                             </tbody>
@@ -188,11 +410,11 @@
                     }
                     else
                     {
-                        <p>Студент еще не проходил тесты.</p>
+                        <p>Студент еще не проходил этот тест</p>
                     }
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseResultsModal">Закрыть</button>
+                    <button class="btn btn-secondary" @onclick="CloseTestAttemptsModal">Закрыть</button>
                 </div>
             </div>
         </div>
@@ -223,65 +445,120 @@
 }
 
 @code {
-    private List<Student> studentsList = new();
+    private List<Student> allStudents = new();
+    private List<TestModel> allTests = new();
+    private List<TestModel> filteredTests = new();
+    private List<TestResult> allBestResults = new();
+    private List<TestResult> testAttempts = new();
+    private HashSet<int> selectedTestIds = new();
+    private bool selectAllTests = true;
+    
     private Student? selectedStudent;
+    private TestModel? selectedTest;
     private Student newStudent = new();
-    private List<TestResult> studentResults = new();
     
     private bool showAddStudentModal = false;
     private bool showEditStudentModal = false;
     private bool showStudentDetailsModal = false;
-    private bool showResultsModal = false;
     private bool showDeleteStudentModal = false;
+    private bool showTestAttemptsModal = false;
+    private bool showColumnSelectorModal = false;
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadStudents();
+        await LoadAllData();
     }
 
-    private async Task LoadStudents()
+    private async Task LoadAllData()
     {
-        studentsList = await DbContext.Students
+        allStudents = await DbContext.Students
             .OrderBy(s => s.FullName)
+            .ToListAsync();
+
+        allTests = await DbContext.Tests
+            .OrderBy(t => t.Name)
+            .ToListAsync();
+
+        // Инициализация выбранных тестов (все по умолчанию)
+        selectedTestIds = new HashSet<int>(allTests.Select(t => t.Id));
+        filteredTests = allTests.ToList();
+
+        allBestResults = await DbContext.TestResults
+            .Include(tr => tr.Test)
+            .Include(tr => tr.Student)
+            .GroupBy(tr => new { tr.StudentId, tr.TestId })
+            .Select(g => g.OrderByDescending(tr => tr.Score).First())
             .ToListAsync();
     }
 
-    private async Task LoadStudentResults()
+    private bool IsTestSelected(int testId)
     {
-        if (selectedStudent != null)
-        {
-            studentResults = await DbContext.TestResults
-                .Include(tr => tr.Test)
-                .Where(tr => tr.StudentId == selectedStudent.Id)
-                .GroupBy(tr => tr.TestId)
-                .Select(g => g.OrderByDescending(tr => tr.Score).First())
-                .ToListAsync();
-        }
+        return selectedTestIds.Contains(testId);
     }
 
-    public async Task SaveTestResult(int testId, int studentId, int score)
+    private void ToggleTestSelection(int testId, bool isSelected)
     {
-        var existingResult = await DbContext.TestResults
-            .FirstOrDefaultAsync(tr => tr.TestId == testId && tr.StudentId == studentId);
-
-        if (existingResult != null)
-        {
-            existingResult.Score = score;
-            existingResult.TestDate = DateTime.Now;
-        }
+        if (isSelected)
+            selectedTestIds.Add(testId);
         else
-        {
-            var newResult = new TestResult
-            {
-                TestId = testId,
-                StudentId = studentId,
-                Score = score,
-                TestDate = DateTime.Now
-            };
-            DbContext.TestResults.Add(newResult);
-        }
+            selectedTestIds.Remove(testId);
+
+        selectAllTests = selectedTestIds.Count == allTests.Count;
+    }
+
+    private void ToggleAllTests()
+    {
+        if (selectAllTests)
+            selectedTestIds = new HashSet<int>(allTests.Select(t => t.Id));
+        else
+            selectedTestIds.Clear();
+    }
+
+    private void ApplyColumnSelection()
+    {
+        filteredTests = allTests.Where(t => selectedTestIds.Contains(t.Id)).ToList();
+        CloseColumnSelectorModal();
+    }
+
+    private void OpenColumnSelectorModal()
+    {
+        showColumnSelectorModal = true;
+    }
+
+    private void CloseColumnSelectorModal()
+    {
+        showColumnSelectorModal = false;
+    }
+
+    private async Task ShowTestAttempts(Student student, TestModel test)
+    {
+        selectedStudent = student;
+        selectedTest = test;
         
-        await DbContext.SaveChangesAsync();
+        testAttempts = await DbContext.TestResults
+            .Where(tr => tr.StudentId == student.Id && tr.TestId == test.Id)
+            .OrderByDescending(tr => tr.TestDate)
+            .ToListAsync();
+
+        showTestAttemptsModal = true;
+    }
+
+    private void CloseTestAttemptsModal()
+    {
+        showTestAttemptsModal = false;
+        selectedTest = null;
+    }
+
+    private string GetScoreColor(int? score)
+    {
+        if (!score.HasValue || score < 0) return "inherit";
+        return score switch
+        {
+            >= 90 => "#d4edda",  // Зеленый
+            >= 70 => "#fff3cd",  // Желтый
+            >= 50 => "#ffcfab",  // Оранжевый
+            _ => "#ffb6ad"       // Красный
+        };
     }
 
     private void SelectStudent(Student student)
@@ -304,7 +581,7 @@
     {
         DbContext.Students.Add(newStudent);
         await DbContext.SaveChangesAsync();
-        await LoadStudents();
+        await LoadAllData();
         CloseAddStudentModal();
     }
 
@@ -321,7 +598,7 @@
     private async Task SaveEditedStudent()
     {
         await DbContext.SaveChangesAsync();
-        await LoadStudents();
+        await LoadAllData();
         CloseEditStudentModal();
     }
 
@@ -342,7 +619,7 @@
             DbContext.Students.Remove(selectedStudent);
             await DbContext.SaveChangesAsync();
             selectedStudent = null;
-            await LoadStudents();
+            await LoadAllData();
             CloseDeleteStudentModal();
         }
     }
@@ -358,17 +635,6 @@
     private void CloseStudentDetailsModal()
     {
         showStudentDetailsModal = false;
-    }
-
-    private async Task OpenResultsModal()
-    {
-        await LoadStudentResults();
-        showResultsModal = true;
-    }
-
-    private void CloseResultsModal()
-    {
-        showResultsModal = false;
     }
 
     private void NavigateToAdminMain()

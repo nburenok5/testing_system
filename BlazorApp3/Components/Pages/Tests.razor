@@ -5,13 +5,161 @@
 @using Microsoft.EntityFrameworkCore
 @inject DataBaseContext DbContext
 @inject NavigationManager Navigation
+@using System.Linq
+@using Microsoft.AspNetCore.Components.Web
+<style>
+    /* Основные стили контейнера */
+    .admin-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
 
+    /* Стили панели действий */
+    .action-panel {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    /* Стили кнопок */
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        border: none;
+    }
+
+    /* Эффекты при наведении */
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    /* Стили таблицы тестов */
+    .tests-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: white;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    /* Стили заголовков таблицы */
+    .tests-table th {
+        background-color: #3498db;
+        color: white;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+    }
+
+    /* Стили ячеек таблицы */
+    .tests-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s ease;
+    }
+
+    /* Убираем границу у последней строки */
+    .tests-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Эффект при наведении на строку */
+    .tests-table tr:hover td {
+        background-color: #f8f9fa;
+    }
+
+    /* Стиль активной строки */
+    .tests-table tr.active td {
+        background-color: #e9f7fe;
+    }
+
+    /* Цвета кнопок */
+    .btn-primary {
+        background-color: #3498db;
+        color: white;
+    }
+
+    .btn-warning {
+        background-color: #f39c12;
+        color: white;
+    }
+
+    .btn-danger {
+        background-color: #e74c3c;
+        color: white;
+    }
+
+    .btn-outline-primary {
+        background-color: transparent;
+        color: #3498db;
+        border: 1px solid #3498db;
+    }
+
+    /* Стили модальных окон */
+    .modal-content {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+        border-bottom: none;
+        padding: 1.5rem;
+        background-color: #f8f9fa;
+        border-top-left-radius: 12px;
+        border-top-right-radius: 12px;
+    }
+
+    .modal-title {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        border-top: none;
+        padding: 1rem 1.5rem;
+        background-color: #f8f9fa;
+        border-bottom-left-radius: 12px;
+        border-bottom-right-radius: 12px;
+    }
+
+    /* Адаптивный дизайн для мобильных устройств */
+    @@media (max-width: 768px) {
+        .action-panel {
+            flex-direction: column;
+        }
+
+        .action-btn {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
 <h3>Управление тестами</h3>
 
 <div class="mb-3">
     <button class="btn btn-primary" @onclick="OpenAddTestModal">Добавить тест</button>
     <button class="btn btn-warning" @onclick="OpenEditTestModal" disabled="@(selectedTest == null)">Изменить тест</button>
     <button class="btn btn-danger" @onclick="OpenDeleteTestModal" disabled="@(selectedTest == null)">Удалить тест</button>
+    <button class="btn btn-outline-primary" @onclick="NavigateToAdminMain" >На главную</button>
 </div>
 
 <table class="table">
@@ -371,4 +519,10 @@
             StateHasChanged();
         }
     }
+
+    private void NavigateToAdminMain()
+    {
+        Navigation.NavigateTo("/admin_main");
+    }
+    
 }
