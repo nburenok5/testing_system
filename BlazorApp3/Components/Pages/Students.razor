@@ -160,7 +160,7 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Последние результаты тестов: @selectedStudent.FullName</h5>
+                    <h5 class="modal-title">Лучшие результаты тестов: @selectedStudent.FullName</h5>
                     <button type="button" class="close" @onclick="CloseResultsModal">&times;</button>
                 </div>
                 <div class="modal-body">
@@ -170,16 +170,16 @@
                             <thead>
                                 <tr>
                                     <th>Тест</th>
-                                    <th>Результат</th>
-                                    <th>Дата прохождения</th>
+                                    <th>Лучший результат</th>
+                                    <th>Дата получения</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var result in studentResults.OrderByDescending(r => r.TestDate))
+                                @foreach (var result in studentResults.OrderBy(r => r.Test?.Name))
                                 {
                                     <tr>
                                         <td>@result.Test?.Name</td>
-                                        <td>@result.Score</td>
+                                        <td>@result.Score%</td>
                                         <td>@result.TestDate.ToString("dd.MM.yyyy HH:mm")</td>
                                     </tr>
                                 }
@@ -254,7 +254,7 @@
                 .Include(tr => tr.Test)
                 .Where(tr => tr.StudentId == selectedStudent.Id)
                 .GroupBy(tr => tr.TestId)
-                .Select(g => g.OrderByDescending(tr => tr.TestDate).First())
+                .Select(g => g.OrderByDescending(tr => tr.Score).First())
                 .ToListAsync();
         }
     }
