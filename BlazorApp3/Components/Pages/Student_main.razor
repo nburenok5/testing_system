@@ -7,16 +7,98 @@
 
 @if (student != null)
 {
-    <h3>Добро пожаловать, @student.FullName!</h3>
-    <div class="admin-buttons">
-        <button class="btn btn-primary" @onclick="NavigateToPassingTest">Выбрать тест</button>
-        <button class="btn btn-primary" @onclick="NavigateToTestsResults">Мои результаты</button>
+    <div class="admin-dashboard">
+    <div class="dashboard-header">
+        <h3><i class="bi bi-speedometer2"></i> Панель студента</h3>
     </div>
+    <h3>Добро пожаловать, @student.FullName!</h3>
+    <div class="dashboard-cards">
+        <div class="admin-card" @onclick="NavigateToPassingTest">
+            <div class="card-icon">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="card-content">
+                <h4>Список тестов</h4>
+                <p>Выбор тестов, доступных для прохождения</p>
+            </div>
+        </div>
+
+        <div class="admin-card" @onclick="NavigateToTestsResults">
+            <div class="card-icon">
+                <i class="bi bi-journal-text"></i>
+            </div>
+            <div class="card-content">
+                <h4>Мои результаты</h4>
+                <p>Просмотр истории прохождения тестов</p>
+            </div>
+        </div>
+    </div>
+    </div>
+    @* <div class="admin-buttons"> *@
+    @*     <button class="btn btn-primary" @onclick="NavigateToPassingTest">Выбрать тест</button> *@
+    @*     <button class="btn btn-primary" @onclick="NavigateToTestsResults">Мои результаты</button> *@
+    @* </div> *@
 }
 else
 {
     <p>Загрузка данных...</p>
 }
+
+<style>
+    .admin-dashboard {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        color: #2c3e50;
+    }
+
+    .dashboard-header h3 {
+        font-weight: 600;
+    }
+
+    .dashboard-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .admin-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: 1px solid #e0e0e0;
+    }
+
+    .admin-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-icon {
+        font-size: 2.5rem;
+        color: #3498db;
+        margin-bottom: 1rem;
+    }
+
+    .card-content h4 {
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .card-content p {
+        color: #7f8c8d;
+        margin: 0;
+    }
+</style>
 
 @code {
     [Parameter]

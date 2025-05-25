@@ -35,6 +35,9 @@ else
         }
         </tbody>
     </table>
+    <div class="action-buttons">
+        <button class="btn btn-primary" @onclick="NavigateToMainPage">На главную</button>
+    </div>
 }
 
 @code {
@@ -54,6 +57,11 @@ else
             .Include(t => t.QuestionModels)
             .Where(t => t.QuestionModels.Any())
             .ToListAsync();
+    }
+    
+    private void NavigateToMainPage()
+    {
+        Navigation.NavigateTo($"/student_main/{StudentId}");
     }
 
     private void StartTest(int testId)

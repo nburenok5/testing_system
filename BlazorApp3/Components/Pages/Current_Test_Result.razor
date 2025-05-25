@@ -36,6 +36,7 @@ else
         <div class="action-buttons">
             <button class="btn btn-primary" @onclick="NavigateToTestsList">К списку тестов</button>
             <button class="btn btn-primary" @onclick="NavigateToTestResults">Все мои результаты</button>
+            <button class="btn btn-primary" @onclick="NavigateToMainPage">На главную</button>
         </div>
     </div>
 }
@@ -65,16 +66,16 @@ else
         return (int)Math.Round(testResult.Score / 100.0 * testResult.Test.QuestionModels.Count);
     }
 
-    private string GetScoreLevel(int score)
-    {
-        return score switch
-        {
-            >= 85 => "excellent",
-            >= 60 => "good",
-            >= 40 => "average",
-            _ => "poor"
-            };
-    }
+    // private string GetScoreLevel(int score)
+    // {
+    //     return score switch
+    //     {
+    //         >= 85 => "excellent",
+    //         >= 60 => "good",
+    //         >= 40 => "average",
+    //         _ => "poor"
+    //         };
+    // }
 
     private string GetResultMessage(int score)
     {
@@ -95,5 +96,10 @@ else
     private void NavigateToTestResults()
     {
         Navigation.NavigateTo($"/student_test_results/{testResult.StudentId}");
+    }
+    
+    private void NavigateToMainPage()
+    {
+        Navigation.NavigateTo($"/student_main/{StudentId}");
     }
 }

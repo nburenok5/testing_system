@@ -23,7 +23,7 @@ else
         <tr>
             <th>Название теста</th>
             <th>Результат (%)</th>
-            <th>Дата прохождения теста(хз - с наилучшим результатом)</th>
+            <th>Дата прохождения теста</th>
         </tr>
         </thead>
         <tbody>
@@ -37,6 +37,10 @@ else
         }
         </tbody>
     </table>
+    <div class="action-buttons">
+        <button class="btn btn-primary" @onclick="NavigateToTestsList">К списку тестов</button>
+        <button class="btn btn-primary" @onclick="NavigateToMainPage">На главную</button>
+    </div>
 }
 
 @code {
@@ -50,6 +54,16 @@ else
         await LoadResults();
     }
 
+    private void NavigateToTestsList()
+    {
+        Navigation.NavigateTo($"/test_selection/{StudentId}");
+    }
+
+    private void NavigateToMainPage()
+    {
+        Navigation.NavigateTo($"/student_main/{StudentId}");
+    }
+    
     private async Task LoadResults()
     {
         results = await DbContext.TestResults

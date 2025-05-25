@@ -500,3 +500,4 @@ C:\Users\sdahu\OneDrive\Рабочий стол\папки с языками\C#\
 C:\Users\sdahu\OneDrive\Рабочий стол\папки с языками\C#\testing_system\BlazorApp3\obj\Debug\net8.0\BlazorApp3.pdb
 C:\Users\sdahu\OneDrive\Рабочий стол\папки с языками\C#\testing_system\BlazorApp3\obj\Debug\net8.0\BlazorApp3.genruntimeconfig.cache
 C:\Users\sdahu\OneDrive\Рабочий стол\папки с языками\C#\testing_system\BlazorApp3\obj\Debug\net8.0\ref\BlazorApp3.dll
+C:\Users\Настя\Downloads\test-sys-app-main\BlazorApp3\obj\Debug\net8.0\BlazorApp3.sourcelink.json
