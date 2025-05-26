@@ -58,12 +58,11 @@ else
             .Where(t => t.QuestionModels.Any())
             .ToListAsync();
     }
-    
+
     private void NavigateToMainPage()
     {
         Navigation.NavigateTo($"/student_main/{StudentId}");
     }
-
     private void StartTest(int testId)
     {
         Navigation.NavigateTo($"/take_test/{testId}/{StudentId}");
