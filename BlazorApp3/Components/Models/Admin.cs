@@ -3,18 +3,18 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BlazorApp3.Models
 {
-    public class Student
+    public class Admin
     {
         [Key]
         public int Id { get; set; }
 
         [Required]
-        [Column("full_name")] // 👈 в БД поле в snake_case
+        [Column("full_name")]
         public string FullName { get; set; } = string.Empty;
 
         [Required]
-        [Column("birth_date")]
-        public string BirthDate { get; set; } = string.Empty;
+        [Column("subject")]
+        public string Subject { get; set; } = string.Empty;
 
         [Required]
         [Column("login")]
@@ -23,8 +23,6 @@ namespace BlazorApp3.Models
         [Required]
         [Column("password")]
         public string Password { get; set; } = string.Empty;
-
-        public List<TestResult> TestResults { get; set; } = new();
     }
 
 }

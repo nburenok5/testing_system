@@ -1,8 +1,10 @@
 ﻿@page "/test_selection/{StudentId:int}"
 @rendermode InteractiveServer
+
 @using BlazorApp3.Models
 @using Microsoft.EntityFrameworkCore
 @using BlazorApp3.Components.Models.ModelsDataBases
+
 @inject DataBaseContext DbContext
 @inject NavigationManager Navigation
 
@@ -10,61 +12,65 @@
 
 @if (tests == null)
 {
-    <p>Загрузка тестов...</p>
+<p>Загрузка тестов...</p>
 }
 else if (!tests.Any())
 {
-    <p>Нет доступных тестов</p>
+<p>Нет доступных тестов</p>
 }
 else
 {
-    <table class="table">
-        <thead>
-        <tr>
-            <th>Название теста</th>
-            <th>Количество вопросов</th>
-        </tr>
-        </thead>
-        <tbody>
-        @foreach (var test in tests)
-        {
-            <tr @onclick="() => StartTest(test.Id)">
-                <td>@test.Name</td>
-                <td>@test.QuestionModels.Count</td>
-            </tr>
-        }
-        </tbody>
-    </table>
-    <div class="action-buttons">
-        <button class="btn btn-primary" @onclick="NavigateToMainPage">На главную</button>
-    </div>
+<table class="table">
+    <thead>
+    <tr>
+        <th>Название теста</th>
+        <th>Количество вопросов</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var test in tests)
+    {
+    <tr @onclick="() => StartTest(test.Id)" style="cursor: pointer;">
+        <td>@test.Title</td>
+        <td>@test.Questions.Count</td>
+    </tr>
+    }
+    </tbody>
+</table>
+
+<div class="action-buttons">
+    <button class="btn btn-primary" @onclick="NavigateToMainPage">На главную</button>
+</div>
 }
 
 @code {
-    private List<TestModel>? tests;
+private List<TestModel>? tests;
 
-    [Parameter]
-    public int StudentId { get; set; }
-    
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadTests();
-    }
+[Parameter]
+public int StudentId { get; set; }
 
-    private async Task LoadTests()
-    {
-        tests = await DbContext.Tests
-            .Include(t => t.QuestionModels)
-            .Where(t => t.QuestionModels.Any())
-            .ToListAsync();
-    }
+protected override async Task OnInitializedAsync()
+{
+await LoadTests();
+}
 
-    private void NavigateToMainPage()
-    {
-        Navigation.NavigateTo($"/student_main/{StudentId}");
-    }
-    private void StartTest(int testId)
-    {
-        Navigation.NavigateTo($"/take_test/{testId}/{StudentId}");
-    }
+private async Task LoadTests()
+{
+    tests = await DbContext.Tests
+        .Include(t => t.Questions)
+        .Where(t => t.Questions.Any())
+        .OrderBy(t => t.Title)
+        .ToListAsync();
+}
+
+
+private void NavigateToMainPage()
+{
+Navigation.NavigateTo($"/student_main/{StudentId}");
+}
+
+private void StartTest(int testId)
+{
+Navigation.NavigateTo($"/take_test/{testId}/{StudentId}");
+}
 }

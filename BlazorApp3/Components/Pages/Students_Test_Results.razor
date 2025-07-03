@@ -1,8 +1,10 @@
 ﻿@page "/student_test_results/{StudentId:int}"
 @rendermode InteractiveServer
+
 @using BlazorApp3.Models
 @using Microsoft.EntityFrameworkCore
 @using BlazorApp3.Components.Models.ModelsDataBases
+
 @inject DataBaseContext DbContext
 @inject NavigationManager Navigation
 
@@ -23,20 +25,21 @@ else
         <tr>
             <th>Название теста</th>
             <th>Результат (%)</th>
-            <th>Дата прохождения теста</th>
+            <th>Дата и время прохождения</th>
         </tr>
         </thead>
         <tbody>
         @foreach (var result in results)
         {
             <tr>
-                <td>@result.Test.Name</td>
+                <td>@result.Test?.Title</td>
                 <td>@result.Score</td>
-                <th>@result.TestDate</th>
+                <td>@($"{result.DateTaken} {result.TimeTaken}")</td>
             </tr>
         }
         </tbody>
     </table>
+
     <div class="action-buttons">
         <button class="btn btn-primary" @onclick="NavigateToTestsList">К списку тестов</button>
         <button class="btn btn-primary" @onclick="NavigateToMainPage">На главную</button>
@@ -54,6 +57,15 @@ else
         await LoadResults();
     }
 
+    private async Task LoadResults()
+    {
+        results = await DbContext.TestResults
+            .Include(tr => tr.Test)
+            .Where(tr => tr.StudentId == StudentId)
+            .OrderByDescending(tr => tr.DateTaken)
+            .ToListAsync();
+    }
+
     private void NavigateToTestsList()
     {
         Navigation.NavigateTo($"/test_selection/{StudentId}");
@@ -62,14 +74,5 @@ else
     private void NavigateToMainPage()
     {
         Navigation.NavigateTo($"/student_main/{StudentId}");
-    }
-    
-    private async Task LoadResults()
-    {
-        results = await DbContext.TestResults
-            .Include(tr => tr.Test)
-            .Where(tr => tr.StudentId == StudentId)
-            .OrderByDescending(tr => tr.TestDate)
-            .ToListAsync();
     }
 }

@@ -102,7 +102,7 @@
 @code {
     private LoginModel loginModel = new LoginModel();
     private string selectedRole = "student";
-    private string errorMessage;
+    private string errorMessage = string.Empty;
 
     private async Task HandleValidSubmit()
     {
@@ -131,14 +131,22 @@
             }
             else if (selectedRole == "admin")
             {
-                if (loginModel.Username == "admin" && loginModel.Password == "12345")
+                var admin = await DbContext.Admins
+                    .FirstOrDefaultAsync(a => a.Login == loginModel.Username);
+
+                if (admin == null)
                 {
-                    Navigation.NavigateTo("/admin_main");
+                    errorMessage = "Администратор с таким логином не найден.";
+                    return;
                 }
-                else
+
+                if (admin.Password != loginModel.Password)
                 {
-                    errorMessage = "Неверный логин или пароль администратора.";
+                    errorMessage = "Неверный пароль администратора.";
+                    return;
                 }
+
+                Navigation.NavigateTo("/admin_main");
             }
         }
         catch (Exception ex)
@@ -162,4 +170,3 @@
         public string Password { get; set; }
     }
 }
-

@@ -7,401 +7,79 @@
 @inject NavigationManager Navigation
 
 <div class="mb-3">
-    <button class="btn btn-primary" @onclick="OpenAddStudentModal">Добавить студента</button>
-    <button class="btn btn-warning" @onclick="OpenEditStudentModal" disabled="@(selectedStudent == null)">Редактировать</button>
-    <button class="btn btn-danger" @onclick="OpenDeleteStudentModal" disabled="@(selectedStudent == null)">Удалить</button>
-    <button class="btn btn-info" @onclick="OpenStudentDetailsModal" disabled="@(selectedStudent == null)">Данные</button>
-    <button class="btn btn-secondary" @onclick="OpenColumnSelectorModal">Выбрать тесты</button>
-    <button class="btn btn-outline-primary" @onclick="NavigateToAdminMain" >На главную</button>
+    <button class="btn btn-primary" @onclick="OpenAllResultsModal">Показать все результаты</button>
 </div>
-<style>
-    /* Основные стили страницы */
-    .container {
-        max-width: 1400px;
-        margin: 2rem auto;
-        padding: 0 1.5rem;
-    }
 
-    /* Панель управления */
-    .action-panel {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 1rem;
-        margin-bottom: 2rem;
-        padding: 1.5rem;
-        background: #f8f9fa;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-
-    .action-panel button {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.75rem 1.25rem;
-        border-radius: 8px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-        border: none;
-    }
-
-    .action-panel button i {
-        font-size: 1.1rem;
-    }
-
-    .action-panel button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-
-    /* Таблица студентов */
-    .students-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        background: white;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-
-    .students-table th {
-        background-color: #3498db;
-        color: white;
-        padding: 1rem;
-        text-align: left;
-        font-weight: 600;
-    }
-
-    .students-table td {
-        padding: 1rem;
-        border-bottom: 1px solid #eee;
-        transition: background-color 0.2s ease;
-    }
-
-    .students-table tr:last-child td {
-        border-bottom: none;
-    }
-
-    .students-table tr:hover td {
-        background-color: #f8f9fa;
-    }
-
-    .students-table tr.active td {
-        background-color: #e9f7fe;
-    }
-
-    /* Цвета кнопок */
-    .btn-primary {
-        background-color: #3498db;
-        color: white;
-    }
-
-    .btn-warning {
-        background-color: #f39c12;
-        color: white;
-    }
-
-    .btn-danger {
-        background-color: #e74c3c;
-        color: white;
-    }
-
-    .btn-info {
-        background-color: #17a2b8;
-        color: white;
-    }
-
-    .btn-secondary {
-        background-color: #6c757d;
-        color: white;
-    }
-
-    .btn-outline-primary {
-        background-color: transparent;
-        color: #3498db;
-        border: 1px solid #3498db;
-    }
-
-    /* Модальные окна */
-    .modal-content {
-        border-radius: 12px;
-        border: none;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    }
-
-    .modal-header {
-        border-bottom: none;
-        padding: 1.5rem;
-        background-color: #f8f9fa;
-        border-top-left-radius: 12px;
-        border-top-right-radius: 12px;
-    }
-
-    .modal-title {
-        font-weight: 600;
-        color: #2c3e50;
-    }
-
-    .modal-body {
-        padding: 1.5rem;
-    }
-
-    .modal-footer {
-        border-top: none;
-        padding: 1rem 1.5rem;
-        background-color: #f8f9fa;
-        border-bottom-left-radius: 12px;
-        border-bottom-right-radius: 12px;
-    }
-
-    /* Адаптивность */
-    @@media (max-width: 768px) {
-        .action-panel {
-            flex-direction: column;
-        }
-
-        .action-panel button {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-
-    /* Анимации */
-    @@keyframes fadeIn {
-         from { opacity: 0; transform: translateY(10px); }
-         to { opacity: 1; transform: translateY(0); }
-     }
-
-    .modal {
-        animation: fadeIn 0.3s ease-out;
-    }
-</style>
-@if (filteredTests.Any() && allStudents.Any())
+@if (students == null || allTests == null)
 {
-    <div style="overflow-x: auto;">
-        <table class="table table-bordered">
-            <thead>
-                <tr>
-                    <th style="min-width: 200px;">Студент</th>
-                    @foreach (var test in filteredTests)
-                    {
-                        <th style="text-align: center; min-width: 100px;">@test.Name</th>
-                    }
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var student in allStudents)
-                {
-                    <tr>
-                        <td @onclick="() => SelectStudent(student)" 
-                            style="cursor: pointer; @(selectedStudent == student ? "background-color: #f0f0f0;" : "")">
-                            @student.FullName
-                        </td>
-                        @foreach (var test in filteredTests)
-                        {
-                            var result = allBestResults
-                                .FirstOrDefault(r => r.StudentId == student.Id && r.TestId == test.Id);
-                            
-                            <td @onclick="() => ShowTestAttempts(student, test)"
-                                style="text-align: center; cursor: pointer; background-color: @GetScoreColor(result?.Score ?? -1)">
-                                @(result?.Score != null ? $"{result.Score}%" : "-")
-                            </td>
-                        }
-                    </tr>
-                }
-            </tbody>
-        </table>
-    </div>
+    <p>Загрузка данных...</p>
 }
 else
 {
-    <p>Нет данных для отображения</p>
-}
-
-<!-- Модальное окно выбора колонок -->
-@if (showColumnSelectorModal)
-{
-    <div class="modal" style="display: block; background: rgba(0, 0, 0, 0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Выбор отображаемых тестов</h5>
-                    <button type="button" class="close" @onclick="CloseColumnSelectorModal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="checkbox" id="selectAll" 
-                               checked="@selectAllTests"
-                               @onchange="@((e) => { selectAllTests = (bool)e.Value; ToggleAllTests(); })" />
-                        <label class="form-check-label" for="selectAll">
-                            <strong>Выбрать все</strong>
-                        </label>
-                    </div>
-                    <hr />
-                    @foreach (var test in allTests)
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ФИО студента</th>
+                @foreach (var test in filteredTests)
+                {
+                    <th style="text-align: center; min-width: 100px;">@test.Title</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var student in students)
+            {
+                <tr>
+                    <td>@student.FullName</td>
+                    @foreach (var test in filteredTests)
                     {
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" 
-                                   id="@($"test_{test.Id}")" 
-                                   checked="@IsTestSelected(test.Id)"
-                                   @onchange="@((e) => ToggleTestSelection(test.Id, (bool)e.Value))" />
-                            <label class="form-check-label" for="@($"test_{test.Id}")">
-                                @test.Name
-                            </label>
-                        </div>
+                        var result = student.TestResults
+                            .Where(tr => tr.TestId == test.Id)
+                            .OrderByDescending(tr => tr.DateTaken)
+                            .FirstOrDefault();
+
+                        <td style="text-align: center;">
+                            @if (result != null)
+                            {
+                                <span>@result.Score%</span><br />
+                                <small>@result.DateTaken</small>
+                            }
+                            else
+                            {
+                                <span>—</span>
+                            }
+                        </td>
                     }
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-primary" @onclick="ApplyColumnSelection">Применить</button>
-                    <button class="btn btn-secondary" @onclick="CloseColumnSelectorModal">Отмена</button>
-                </div>
-            </div>
-        </div>
-    </div>
+                </tr>
+            }
+        </tbody>
+    </table>
 }
 
-<!-- Модальное окно добавления студента -->
-@if (showAddStudentModal)
+@if (showAllResultsModal)
 {
-    <div class="modal" style="display: block; background: rgba(0, 0, 0, 0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Добавить студента</h5>
-                    <button type="button" class="close" @onclick="CloseAddStudentModal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <EditForm Model="@newStudent" OnValidSubmit="AddStudent">
-                        <DataAnnotationsValidator />
-                        <div class="form-group">
-                            <label>ФИО:</label>
-                            <InputText class="form-control" @bind-Value="newStudent.FullName" />
-                            <ValidationMessage For="@(() => newStudent.FullName)" />
-                        </div>
-                        <div class="form-group">
-                            <label>Логин:</label>
-                            <InputText class="form-control" @bind-Value="newStudent.Login" />
-                            <ValidationMessage For="@(() => newStudent.Login)" />
-                        </div>
-                        <div class="form-group">
-                            <label>Пароль:</label>
-                            <InputText type="password" class="form-control" @bind-Value="newStudent.Password" />
-                            <ValidationMessage For="@(() => newStudent.Password)" />
-                        </div>
-                        <div class="form-group">
-                            <label>Дата рождения:</label>
-                            <InputDate class="form-control" @bind-Value="newStudent.BirthDate" />
-                            <ValidationMessage For="@(() => newStudent.BirthDate)" />
-                        </div>
-                        <button type="submit" class="btn btn-primary">Добавить</button>
-                        <button type="button" class="btn btn-secondary" @onclick="CloseAddStudentModal">Отмена</button>
-                    </EditForm>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-<!-- Модальное окно редактирования студента -->
-@if (showEditStudentModal && selectedStudent != null)
-{
-    <div class="modal" style="display: block; background: rgba(0, 0, 0, 0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Редактировать студента</h5>
-                    <button type="button" class="close" @onclick="CloseEditStudentModal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <EditForm Model="@selectedStudent" OnValidSubmit="SaveEditedStudent">
-                        <DataAnnotationsValidator />
-                        <div class="form-group">
-                            <label>ФИО:</label>
-                            <InputText class="form-control" @bind-Value="selectedStudent.FullName" />
-                        </div>
-                        <div class="form-group">
-                            <label>Логин:</label>
-                            <InputText class="form-control" @bind-Value="selectedStudent.Login" />
-                        </div>
-                        <div class="form-group">
-                            <label>Пароль:</label>
-                            <InputText type="text" class="form-control" @bind-Value="selectedStudent.Password" />
-                        </div>
-                        <div class="form-group">
-                            <label>Дата рождения:</label>
-                            <InputDate class="form-control" @bind-Value="selectedStudent.BirthDate" />
-                        </div>
-                        <button type="submit" class="btn btn-primary">Сохранить</button>
-                        <button type="button" class="btn btn-secondary" @onclick="CloseEditStudentModal">Отмена</button>
-                    </EditForm>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-<!-- Модальное окно информации о студенте -->
-@if (showStudentDetailsModal && selectedStudent != null)
-{
-    <div class="modal" style="display: block; background: rgba(0, 0, 0, 0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Данные студента: @selectedStudent.FullName</h5>
-                    <button type="button" class="close" @onclick="CloseStudentDetailsModal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label><strong>ФИО:</strong></label>
-                        <div>@selectedStudent.FullName</div>
-                    </div>
-                    <div class="form-group">
-                        <label><strong>Логин:</strong></label>
-                        <div>@selectedStudent.Login</div>
-                    </div>
-                    <div class="form-group">
-                        <label><strong>Пароль:</strong></label>
-                        <div>@selectedStudent.Password</div>
-                    </div>
-                    <div class="form-group">
-                        <label><strong>Дата рождения:</strong></label>
-                        <div>@selectedStudent.BirthDate.ToShortDateString()</div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseStudentDetailsModal">Закрыть</button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-<!-- Модальное окно всех попыток по тесту -->
-@if (showTestAttemptsModal && selectedStudent != null && selectedTest != null)
-{
-    <div class="modal" style="display: block; background: rgba(0, 0, 0, 0.5);">
+    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Все попытки: @selectedStudent.FullName - @selectedTest.Name</h5>
-                    <button type="button" class="close" @onclick="CloseTestAttemptsModal">&times;</button>
+                    <h5 class="modal-title">Все попытки: @selectedStudent?.FullName - @selectedTest?.Title</h5>
+                    <button type="button" class="btn-close" @onclick="CloseAllResultsModal"></button>
                 </div>
                 <div class="modal-body">
-                    @if (testAttempts.Any())
+                    @if (testAttempts != null && testAttempts.Any())
                     {
                         <table class="table">
                             <thead>
                                 <tr>
-                                    <th>Дата</th>
+                                    <th>Дата и время</th>
                                     <th>Результат</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach (var attempt in testAttempts.OrderByDescending(a => a.TestDate))
+                                @foreach (var attempt in testAttempts.OrderByDescending(a => a.DateTaken))
                                 {
                                     <tr>
-                                        <td>@attempt.TestDate.ToString("dd.MM.yyyy HH:mm")</td>
+                                        <td>@($"{attempt.DateTaken} {attempt.TimeTaken}")</td>
                                         <td>@attempt.Score%</td>
                                     </tr>
                                 }
@@ -410,34 +88,11 @@ else
                     }
                     else
                     {
-                        <p>Студент еще не проходил этот тест</p>
+                        <p>Нет данных.</p>
                     }
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseTestAttemptsModal">Закрыть</button>
-                </div>
-            </div>
-        </div>
-    </div>
-}
-
-<!-- Модальное окно подтверждения удаления -->
-@if (showDeleteStudentModal && selectedStudent != null)
-{
-    <div class="modal" style="display: block; background: rgba(0, 0, 0, 0.5);">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Подтверждение удаления</h5>
-                    <button type="button" class="close" @onclick="CloseDeleteStudentModal">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <p>Вы уверены, что хотите удалить студента <strong>@selectedStudent.FullName</strong>?</p>
-                    <p class="text-danger">Все связанные результаты тестов также будут удалены!</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-danger" @onclick="DeleteStudent">Удалить</button>
-                    <button class="btn btn-secondary" @onclick="CloseDeleteStudentModal">Отмена</button>
+                    <button class="btn btn-secondary" @onclick="CloseAllResultsModal">Закрыть</button>
                 </div>
             </div>
         </div>
@@ -445,24 +100,19 @@ else
 }
 
 @code {
-    private List<Student> allStudents = new();
-    private List<TestModel> allTests = new();
-    private List<TestModel> filteredTests = new();
-    private List<TestResult> allBestResults = new();
-    private List<TestResult> testAttempts = new();
-    private HashSet<int> selectedTestIds = new();
+    private List<Student>? students;
+    private List<TestModel>? allTests;
+    private List<TestModel>? filteredTests => selectedTestIds.Any()
+        ? allTests?.Where(t => selectedTestIds.Contains(t.Id)).ToList()
+        : allTests;
+
+    private List<int> selectedTestIds = new();
     private bool selectAllTests = true;
-    
+
+    private bool showAllResultsModal = false;
     private Student? selectedStudent;
     private TestModel? selectedTest;
-    private Student newStudent = new();
-    
-    private bool showAddStudentModal = false;
-    private bool showEditStudentModal = false;
-    private bool showStudentDetailsModal = false;
-    private bool showDeleteStudentModal = false;
-    private bool showTestAttemptsModal = false;
-    private bool showColumnSelectorModal = false;
+    private List<TestResult>? testAttempts;
 
     protected override async Task OnInitializedAsync()
     {
@@ -471,174 +121,39 @@ else
 
     private async Task LoadAllData()
     {
-        allStudents = await DbContext.Students
-            .OrderBy(s => s.FullName)
-            .ToListAsync();
-
         allTests = await DbContext.Tests
-            .OrderBy(t => t.Name)
+            .OrderBy(t => t.Title)
             .ToListAsync();
 
-        // Инициализация выбранных тестов (все по умолчанию)
-        selectedTestIds = new HashSet<int>(allTests.Select(t => t.Id));
-        filteredTests = allTests.ToList();
-
-        allBestResults = await DbContext.TestResults
-            .Include(tr => tr.Test)
-            .Include(tr => tr.Student)
-            .GroupBy(tr => new { tr.StudentId, tr.TestId })
-            .Select(g => g.OrderByDescending(tr => tr.Score).First())
-            .ToListAsync();
-    }
-
-    private bool IsTestSelected(int testId)
-    {
-        return selectedTestIds.Contains(testId);
-    }
-
-    private void ToggleTestSelection(int testId, bool isSelected)
-    {
-        if (isSelected)
-            selectedTestIds.Add(testId);
-        else
-            selectedTestIds.Remove(testId);
-
-        selectAllTests = selectedTestIds.Count == allTests.Count;
-    }
-
-    private void ToggleAllTests()
-    {
-        if (selectAllTests)
-            selectedTestIds = new HashSet<int>(allTests.Select(t => t.Id));
-        else
-            selectedTestIds.Clear();
-    }
-
-    private void ApplyColumnSelection()
-    {
-        filteredTests = allTests.Where(t => selectedTestIds.Contains(t.Id)).ToList();
-        CloseColumnSelectorModal();
-    }
-
-    private void OpenColumnSelectorModal()
-    {
-        showColumnSelectorModal = true;
-    }
-
-    private void CloseColumnSelectorModal()
-    {
-        showColumnSelectorModal = false;
-    }
-
-    private async Task ShowTestAttempts(Student student, TestModel test)
-    {
-        selectedStudent = student;
-        selectedTest = test;
-        
-        testAttempts = await DbContext.TestResults
-            .Where(tr => tr.StudentId == student.Id && tr.TestId == test.Id)
-            .OrderByDescending(tr => tr.TestDate)
+        students = await DbContext.Students
+            .Include(s => s.TestResults)
+            .ThenInclude(tr => tr.Test)
             .ToListAsync();
 
-        showTestAttemptsModal = true;
-    }
-
-    private void CloseTestAttemptsModal()
-    {
-        showTestAttemptsModal = false;
-        selectedTest = null;
-    }
-
-    private string GetScoreColor(int? score)
-    {
-        if (!score.HasValue || score < 0) return "inherit";
-        return score switch
+        if (selectAllTests && allTests != null)
         {
-            >= 90 => "#d4edda",  // Зеленый
-            >= 70 => "#fff3cd",  // Желтый
-            >= 50 => "#ffcfab",  // Оранжевый
-            _ => "#ffb6ad"       // Красный
-        };
-    }
-
-    private void SelectStudent(Student student)
-    {
-        selectedStudent = student;
-    }
-
-    private void OpenAddStudentModal()
-    {
-        newStudent = new Student { BirthDate = DateTime.Today };
-        showAddStudentModal = true;
-    }
-
-    private void CloseAddStudentModal()
-    {
-        showAddStudentModal = false;
-    }
-
-    private async Task AddStudent()
-    {
-        DbContext.Students.Add(newStudent);
-        await DbContext.SaveChangesAsync();
-        await LoadAllData();
-        CloseAddStudentModal();
-    }
-
-    private void OpenEditStudentModal()
-    {
-        showEditStudentModal = true;
-    }
-
-    private void CloseEditStudentModal()
-    {
-        showEditStudentModal = false;
-    }
-
-    private async Task SaveEditedStudent()
-    {
-        await DbContext.SaveChangesAsync();
-        await LoadAllData();
-        CloseEditStudentModal();
-    }
-
-    private void OpenDeleteStudentModal()
-    {
-        showDeleteStudentModal = true;
-    }
-
-    private void CloseDeleteStudentModal()
-    {
-        showDeleteStudentModal = false;
-    }
-
-    private async Task DeleteStudent()
-    {
-        if (selectedStudent != null)
-        {
-            DbContext.Students.Remove(selectedStudent);
-            await DbContext.SaveChangesAsync();
-            selectedStudent = null;
-            await LoadAllData();
-            CloseDeleteStudentModal();
+            selectedTestIds = allTests.Select(t => t.Id).ToList();
         }
     }
 
-    private void OpenStudentDetailsModal()
+    private async Task OpenAllResultsModal()
     {
-        if (selectedStudent != null)
+        selectedStudent = students?.FirstOrDefault();
+        selectedTest = allTests?.FirstOrDefault();
+
+        if (selectedStudent != null && selectedTest != null)
         {
-            showStudentDetailsModal = true;
+            testAttempts = await DbContext.TestResults
+                .Where(tr => tr.StudentId == selectedStudent.Id && tr.TestId == selectedTest.Id)
+                .OrderByDescending(tr => tr.DateTaken)
+                .ToListAsync();
+
+            showAllResultsModal = true;
         }
     }
 
-    private void CloseStudentDetailsModal()
+    private void CloseAllResultsModal()
     {
-        showStudentDetailsModal = false;
-    }
-
-    private void NavigateToAdminMain()
-    {
-        Navigation.NavigateTo("/admin_main");
+        showAllResultsModal = false;
     }
 }

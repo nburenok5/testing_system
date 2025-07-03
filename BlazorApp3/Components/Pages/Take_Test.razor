@@ -1,4 +1,4 @@
-﻿@page "/take_test/{testId:int}/{StudentId:int}"
+﻿@page "/take_test/{testId:int}/{studentId:int}" 
 @rendermode InteractiveServer
 @using BlazorApp3.Models
 @using BlazorApp3.Components.Models.ModelsDataBases
@@ -13,16 +13,16 @@
 else
 {
     <div class="test-container">
-        <h3>Тест: @test.Name</h3>
+        <h3>Тест: @test.Title</h3>
         
-        @if (currentQuestionIndex >= 0 && currentQuestionIndex < test.QuestionModels.Count)
+        @if (currentQuestionIndex >= 0 && currentQuestionIndex < test.Questions.Count)
         {
             <div class="question-card">
-                <h4>Вопрос @(currentQuestionIndex + 1) из @test.QuestionModels.Count</h4>
+                <h4>Вопрос @(currentQuestionIndex + 1) из @test.Questions.Count</h4>
                 <p>@currentQuestion.QuestionText</p>
                 
                 <div class="options-list">
-                    @foreach (var option in currentQuestion.OptionsList.Select((value, index) => new { value, index }))
+                    @foreach (var option in currentQuestion.AnswerOptionsList.Select((value, index) => new { value, index }))
                     {
                         <div class="form-check">
                             <input class="form-check-input" 
@@ -47,7 +47,7 @@ else
                     </button>
                 }
                 
-                @if (currentQuestionIndex < test.QuestionModels.Count - 1)
+                @if (currentQuestionIndex < test.Questions.Count - 1)
                 {
                     <button class="btn btn-primary" @onclick="NextQuestion" disabled="@(selectedAnswerIndex == -1)">
                         Далее
@@ -73,15 +73,23 @@ else
 
     private TestModel? test;
     private int currentQuestionIndex = 0;
-    private QuestionModel currentQuestion => test?.QuestionModels[currentQuestionIndex];
+
+    private QuestionModel currentQuestion => test!.Questions[currentQuestionIndex];
+
     private int selectedAnswerIndex = -1;
-    private Dictionary<int, int> answers = new Dictionary<int, int>(); // ключ - индекс вопроса, значение - индекс ответа
+
+    private Dictionary<int, int> answers = new();
 
     protected override async Task OnInitializedAsync()
     {
         test = await DbContext.Tests
-            .Include(t => t.QuestionModels)
+            .Include(t => t.Questions)
             .FirstOrDefaultAsync(t => t.Id == testId);
+
+        if (test != null && test.Questions.Count > 0)
+        {
+            selectedAnswerIndex = -1;
+        }
     }
 
     private void SelectAnswer(int answerIndex)
@@ -92,7 +100,7 @@ else
 
     private void NextQuestion()
     {
-        if (currentQuestionIndex < test.QuestionModels.Count - 1)
+        if (currentQuestionIndex < test!.Questions.Count - 1)
         {
             currentQuestionIndex++;
             selectedAnswerIndex = answers.TryGetValue(currentQuestionIndex, out var answer) ? answer : -1;
@@ -110,24 +118,42 @@ else
 
     private async Task FinishTest()
     {
-        // Расчет результата
-        int correctAnswers = test.QuestionModels
-            .Where((q, index) => answers.TryGetValue(index, out var answer) && answer == q.CorrectAnswerIndex)
-            .Count();
-        int score = (int)Math.Round((double)correctAnswers / test.QuestionModels.Count * 100);
+        if (test == null) return;
 
-        // Сохранение результата
+        int correctAnswers = 0;
+
+        for (int i = 0; i < test.Questions.Count; i++)
+        {
+            if (answers.TryGetValue(i, out var selectedIndex))
+            {
+                var options = test.Questions[i].AnswerOptionsList;
+                if (selectedIndex >= 0 && selectedIndex < options.Count)
+                {
+                    var selectedText = options[selectedIndex];
+                    var correctText = test.Questions[i].CorrectAnswer;
+                    if (string.Equals(selectedText.Trim(), correctText.Trim(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        correctAnswers++;
+                    }
+                }
+            }
+        }
+
+        int score = (int)Math.Round((double)correctAnswers / test.Questions.Count * 100);
+
+        var now = DateTime.UtcNow.AddHours(3);
         var result = new TestResult
         {
             TestId = testId,
             StudentId = studentId,
             Score = score,
-            TestDate = DateTime.UtcNow.AddHours(3)
+            DateTaken = now.ToString("yyyy-MM-dd"),
+            TimeTaken = now.ToString("HH:mm:ss")
         };
 
         DbContext.TestResults.Add(result);
         await DbContext.SaveChangesAsync();
-        
+
         Navigation.NavigateTo($"/test_result/{result.Id}/{studentId}");
     }
 }

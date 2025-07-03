@@ -1,8 +1,10 @@
 ﻿@page "/test_result/{ResultId:int}/{StudentId:int}"
 @rendermode InteractiveServer
+
 @using BlazorApp3.Models
 @using BlazorApp3.Components.Models.ModelsDataBases
 @using Microsoft.EntityFrameworkCore
+
 @inject DataBaseContext DbContext
 @inject NavigationManager Navigation
 
@@ -17,19 +19,19 @@ else
 {
     <div class="result-container">
         <h3>Тест завершён</h3>
-            <div class="score-percentage">@testResult.Score%</div>
-            <h4>@GetResultMessage(testResult.Score)</h4>
+        <div class="score-percentage">@testResult.Score%</div>
+        <h4>@GetResultMessage(testResult.Score)</h4>
 
         <div class="result-details">
             <div class="detail-card">
                 <h5>Информация о тесте</h5>
-                <p><strong>Название теста:</strong> @testResult.Test?.Name</p>
-                <p><strong>Дата прохождения:</strong> @testResult.TestDate.ToString("dd.MM.yyyy HH:mm")</p>
+                <p><strong>Название теста:</strong> @testResult.Test?.Title</p>
+                <p><strong>Дата прохождения:</strong> @testResult.DateTaken в @testResult.TimeTaken</p>
             </div>
 
             <div class="detail-card">
                 <h5>Статистика</h5>
-                <p><strong>Правильных ответов:</strong> @CalculateCorrectAnswers() из @testResult.Test?.QuestionModels.Count</p>
+                <p><strong>Правильных ответов:</strong> @CalculateCorrectAnswers() из @testResult.Test?.Questions.Count</p>
             </div>
         </div>
 
@@ -44,38 +46,29 @@ else
 @code {
     [Parameter]
     public int ResultId { get; set; }
-    
+
     [Parameter]
     public int StudentId { get; set; }
 
     private TestResult? testResult;
-    
 
     protected override async Task OnInitializedAsync()
     {
         testResult = await DbContext.TestResults
             .Include(tr => tr.Test)
-            .ThenInclude(t => t.QuestionModels)
+            .ThenInclude(t => t.Questions)
             .FirstOrDefaultAsync(tr => tr.Id == ResultId);
     }
 
-    // может проще сразу передавать аргументы????????????
     private int CalculateCorrectAnswers()
     {
-        if (testResult?.Test?.QuestionModels == null) return 0;
-        return (int)Math.Round(testResult.Score / 100.0 * testResult.Test.QuestionModels.Count);
-    }
+        if (testResult?.Test?.Questions == null || testResult.Test.Questions.Count == 0)
+            return 0;
 
-    // private string GetScoreLevel(int score)
-    // {
-    //     return score switch
-    //     {
-    //         >= 85 => "excellent",
-    //         >= 60 => "good",
-    //         >= 40 => "average",
-    //         _ => "poor"
-    //         };
-    // }
+        // Score хранится как процент, например 75 — 75%
+        double percent = testResult.Score / 100.0;
+        return (int)Math.Round(testResult.Test.Questions.Count * percent);
+    }
 
     private string GetResultMessage(int score)
     {
@@ -85,7 +78,7 @@ else
             >= 60 => "Хороший результат!",
             >= 40 => "Удовлетворительно",
             _ => "Попробуйте ещё раз"
-            };
+        };
     }
 
     private void NavigateToTestsList()
@@ -95,9 +88,9 @@ else
 
     private void NavigateToTestResults()
     {
-        Navigation.NavigateTo($"/student_test_results/{testResult.StudentId}");
+        Navigation.NavigateTo($"/student_test_results/{StudentId}");
     }
-    
+
     private void NavigateToMainPage()
     {
         Navigation.NavigateTo($"/student_main/{StudentId}");
