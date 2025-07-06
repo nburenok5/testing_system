@@ -2,111 +2,131 @@
 @rendermode InteractiveServer
 @inject NavigationManager Navigation
 
-<div class="admin-dashboard">
-    <div class="dashboard-header">
-        <h3><i class="bi bi-speedometer2"></i> Панель главного администратора</h3>
-        <p class="text-success">Вы вошли как главный администратор системы</p>
+<div class="admin-container">
+    <div class="admin-header">
+        <h2><i class="bi bi-shield-lock"></i> Панель администратора</h2>
+        <div class="admin-badge">Главный администратор</div>
     </div>
 
-    <div class="dashboard-cards">
-        <div class="admin-card" @onclick="NavigateToAdminManagement">
+    <div class="function-grid">
+        <!-- Первый ряд -->
+        <div class="function-card teacher-card" @onclick="NavigateToAdminManagement">
             <div class="card-icon">
                 <i class="bi bi-people-fill"></i>
             </div>
-            <div class="card-content">
-                <h4>Преподаватели</h4>
-                <p>Управление учетными записями преподавателей</p>
-            </div>
+            <h3>Преподаватели</h3>
+            <p>Управление учетными записями</p>
         </div>
 
-        <div class="admin-card" @onclick="NavigateToStudentManagement">
+        <div class="function-card student-card" @onclick="NavigateToStudentManagement">
             <div class="card-icon">
                 <i class="bi bi-person-lines-fill"></i>
             </div>
-            <div class="card-content">
-                <h4>Студенты</h4>
-                <p>Управление учетными записями студентов</p>
-            </div>
+            <h3>Студенты</h3>
+            <p>Управление учетными записями</p>
         </div>
 
-        <div class="admin-card" @onclick="NavigateToAllResults">
+        <!-- Второй ряд -->
+        <div class="function-card results-card" @onclick="NavigateToAllResults">
             <div class="card-icon">
                 <i class="bi bi-journal-text"></i>
             </div>
-            <div class="card-content">
-                <h4>Общий журнал</h4>
-                <p>Просмотр всех результатов тестирования</p>
-            </div>
+            <h3>Результаты</h3>
+            <p>Журнал тестирования</p>
         </div>
 
-        <div class="admin-card" @onclick="NavigateToTests">
-            <div class="card-icon">
-                <i class="bi bi-journal-bookmark"></i>
-            </div>
-            <div class="card-content">
-                <h4>Все тесты</h4>
-                <p>Просмотр и управление всеми тестами</p>
-            </div>
-        </div>
+      
     </div>
 </div>
 
 <style>
-    .admin-dashboard {
-        max-width: 1200px;
+    .admin-container {
+        max-width: 1000px;
         margin: 2rem auto;
-        padding: 0 1rem;
+        padding: 0 1.5rem;
     }
 
-    .dashboard-header {
+    .admin-header {
         text-align: center;
-        margin-bottom: 2rem;
-        color: #2c3e50;
+        margin-bottom: 2.5rem;
+        position: relative;
     }
 
-    .dashboard-header h3 {
+    .admin-header h2 {
         font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
     }
 
-    .dashboard-cards {
+    .admin-badge {
+        display: inline-block;
+        background: #3498db;
+        color: white;
+        padding: 0.3rem 1.2rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+
+    .function-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.8rem;
     }
 
-    .admin-card {
+    .function-card {
         background: white;
         border-radius: 10px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
+        padding: 1.8rem 1.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transition: all 0.25s ease;
         cursor: pointer;
-        border: 1px solid #e0e0e0;
+        text-align: center;
+        border-top: 4px solid transparent;
     }
 
-    .admin-card:hover {
+    .function-card:hover {
         transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+    }
+
+    .teacher-card {
+        border-top-color: #3498db;
+    }
+
+    .student-card {
+        border-top-color: #2ecc71;
+    }
+
+    .results-card {
+        border-top-color: #e74c3c;
+    }
+
+    .settings-card {
+        border-top-color: #9b59b6;
     }
 
     .card-icon {
-        font-size: 2.5rem;
-        color: #3498db;
-        margin-bottom: 1rem;
-        text-align: center;
-    }
-
-    .card-content h4 {
+        font-size: 2.2rem;
         color: #2c3e50;
-        margin-bottom: 0.5rem;
-        font-weight: 600;
-        text-align: center;
+        margin-bottom: 1.2rem;
     }
 
-    .card-content p {
+    .function-card h3 {
+        color: #2c3e50;
+        margin-bottom: 0.6rem;
+        font-size: 1.3rem;
+    }
+
+    .function-card p {
         color: #7f8c8d;
         margin: 0;
-        text-align: center;
+        font-size: 0.95rem;
+    }
+
+    @@media (max-width: 600px) {
+        .function-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 
@@ -124,10 +144,5 @@
     private void NavigateToAllResults()
     {
         Navigation.NavigateTo("/all_results");
-    }
-
-    private void NavigateToTests()
-    {
-        Navigation.NavigateTo("/tests");
     }
 }

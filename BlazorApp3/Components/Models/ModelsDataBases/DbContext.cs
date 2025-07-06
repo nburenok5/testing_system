@@ -15,7 +15,13 @@ namespace BlazorApp3.Components.Models.ModelsDataBases
         public DbSet<QuestionModel> Questions { get; set; }
         public DbSet<TestResult> TestResults { get; set; }
         public DbSet<StudentTest> StudentTests { get; set; }
-
+        public async Task<List<string>> GetAllSubjects()
+        {
+            return await Tests
+                .Select(t => t.Subject)
+                .Distinct()
+                .ToListAsync();
+        }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Student>()
