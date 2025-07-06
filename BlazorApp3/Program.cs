@@ -1,6 +1,6 @@
 using BlazorApp3.Components;
-
 using BlazorApp3.Components.Models.ModelsDataBases;
+using BlazorApp3.Models; // Добавлен using для TestAccessService
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,12 +12,15 @@ builder.Services.AddRazorComponents()
 // 2. Затем регистрируем DbContext с правильными параметрами
 builder.Services.AddDbContext<DataBaseContext>(options => 
         options.UseSqlite("Data Source=TestDB.db"),
-    contextLifetime: ServiceLifetime.Scoped,  // Основной контекст
-    optionsLifetime: ServiceLifetime.Singleton);  // Параметры конфигурации
+    contextLifetime: ServiceLifetime.Scoped,
+    optionsLifetime: ServiceLifetime.Singleton);
 
-// 3. Регистрируем фабрику DbContext (если используется)
+// 3. Регистрируем фабрику DbContext
 builder.Services.AddDbContextFactory<DataBaseContext>(options => 
     options.UseSqlite("Data Source=TestDB.db"));
+
+// 4. Регистрируем сервис для проверки доступа к тестам (из папки Models)
+builder.Services.AddScoped<TestAccessService>();
 
 var app = builder.Build();
 
@@ -36,11 +39,14 @@ app.UseAntiforgery();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-// Инициализация БД - важно делать после MapRazorComponents
+// Инициализация БД
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<DataBaseContext>();
     db.Database.EnsureCreated();
+    
+    // Можно добавить начальные данные, если нужно
+    // await SeedData.Initialize(db);
 }
 
 app.Run();

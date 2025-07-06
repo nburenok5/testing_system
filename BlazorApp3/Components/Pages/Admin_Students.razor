@@ -1,0 +1,101 @@
+﻿@page "/admin_students"
+@rendermode InteractiveServer
+@using BlazorApp3.Models
+@using Microsoft.EntityFrameworkCore
+@using BlazorApp3.Components.Models.ModelsDataBases
+@inject DataBaseContext DbContext
+@inject NavigationManager Navigation
+
+<h3>Управление студентами на курсе</h3>
+
+@if (students == null || currentAdmin == null)
+{
+    <p>Загрузка данных...</p>
+}
+else
+{
+    <div class="mb-3">
+        <button class="btn btn-primary" @onclick="SaveChanges">Сохранить изменения</button>
+        <button class="btn btn-secondary" @onclick="NavigateToAdminMain">Назад</button>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ФИО студента</th>
+                <th>На курсе</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var student in students)
+            {
+                <tr>
+                    <td>@student.FullName</td>
+                    <td>
+                        <input type="checkbox" 
+                               checked="@(student.Subjects.Contains(currentAdmin.Subject))"
+                               @onchange="@((e) => ToggleStudentSubject(student, e.Value))" />
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Student>? students;
+    private Admin? currentAdmin;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Получаем текущего админа из базы
+        currentAdmin = await DbContext.Admins.FirstOrDefaultAsync(a => a.Login == "admin" && a.Password == "admin");
+        
+        // Для примера - просто получаем первого админа
+        // В реальном приложении нужно передавать ID текущего пользователя
+        if (currentAdmin == null && DbContext.Admins.Any())
+        {
+            currentAdmin = await DbContext.Admins.FirstAsync();
+        }
+
+        students = await DbContext.Students.ToListAsync();
+
+        // Загружаем предметы для студентов (в реальном приложении нужно хранить в БД)
+        foreach (var student in students)
+        {
+            // Здесь должна быть логика загрузки предметов студента из БД
+            // Для примера просто инициализируем пустой список
+            student.Subjects = new List<string>();
+        }
+    }
+
+    private void ToggleStudentSubject(Student student, object isChecked)
+    {
+        if (currentAdmin == null) return;
+
+        var subject = currentAdmin.Subject;
+        if ((bool)isChecked)
+        {
+            if (!student.Subjects.Contains(subject))
+            {
+                student.Subjects.Add(subject);
+            }
+        }
+        else
+        {
+            student.Subjects.Remove(subject);
+        }
+    }
+
+    private async Task SaveChanges()
+    {
+        // Здесь должна быть логика сохранения в БД
+        // В реальном приложении нужно сохранять связи студентов и предметов
+        await DbContext.SaveChangesAsync();
+    }
+
+    private void NavigateToAdminMain()
+    {
+        Navigation.NavigateTo("/admin_main");
+    }
+}

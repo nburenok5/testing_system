@@ -1,0 +1,313 @@
+﻿@page "/journal"
+@rendermode InteractiveServer
+@using BlazorApp3.Components.Models.ModelsDataBases
+@using BlazorApp3.Models
+@using Microsoft.EntityFrameworkCore
+@inject DataBaseContext DbContext
+@inject NavigationManager Navigation
+
+<style>
+    .journal-container {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    
+    .journal-grid {
+        display: grid;
+        grid-template-columns: auto repeat(@(tests.Count), 1fr);
+        overflow-x: auto;
+        margin-top: 20px;
+    }
+    
+    .header-cell {
+        padding: 10px;
+        background: #3498db;
+        color: white;
+        position: sticky;
+        top: 0;
+        min-width: 150px;
+        text-align: center;
+    }
+    
+    .student-cell {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        position: sticky;
+        left: 0;
+        background: white;
+        min-width: 200px;
+    }
+    
+    .result-cell {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        text-align: center;
+        background: white;
+    }
+    
+    .controls {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 15px;
+    }
+    
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+    }
+    
+    .student-item {
+        padding: 8px 0;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        align-items: center;
+    }
+    
+    .student-checkbox {
+        margin-right: 10px;
+    }
+    
+    .loading-spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 0.2em solid currentColor;
+        border-right-color: transparent;
+        border-radius: 50%;
+        animation: spinner-border 0.75s linear infinite;
+    }
+    
+    @@keyframes spinner-border {
+        to { transform: rotate(360deg); }
+    }
+</style>
+
+<div class="journal-container">
+    <h3>Журнал успеваемости - @currentSubject</h3>
+
+    <div class="controls">
+        <button class="btn btn-primary" @onclick="NavigateToTests">
+            <i class="bi bi-book"></i> Управление тестами
+        </button>
+        <button class="btn btn-secondary" @onclick="ToggleStudentSelection">
+            <i class="bi bi-people-fill"></i> Управление студентами (@courseStudents.Count)
+        </button>
+    </div>
+
+    @if (isLoading)
+    {
+        <div style="text-align: center; padding: 20px;">
+            <span class="loading-spinner"></span> Загрузка данных...
+        </div>
+    }
+    else if (!tests.Any())
+    {
+        <div class="alert alert-warning">
+            Нет тестов по предмету "@currentSubject". Создайте тесты для отображения журнала.
+        </div>
+    }
+    else
+    {
+        <div class="journal-grid">
+            <!-- Пустая ячейка в углу -->
+            <div class="header-cell"></div>
+            
+            <!-- Заголовки тестов -->
+            @foreach (var test in tests)
+            {
+                <div class="header-cell">@test.Title</div>
+            }
+
+            <!-- Строки студентов -->
+            @foreach (var student in courseStudents)
+            {
+                <div class="student-cell">@student.FullName</div>
+                
+                @foreach (var test in tests)
+                {
+                    var result = results.FirstOrDefault(r => 
+                        r.StudentId == student.Id && r.TestId == test.Id);
+                    
+                    <div class="result-cell">
+                        @if (result != null)
+                        {
+                            @if (result != null) { @result.Score<span>%</span> } else { <span>-</span> }
+                        }
+                        else
+                        {
+                            <span>-</span>
+                        }
+                    </div>
+                }
+            }
+        </div>
+    }
+
+    @if (showStudentSelection)
+    {
+        <div class="modal-overlay">
+            <div class="modal-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h4>Управление студентами курса</h4>
+                    <button @onclick="ToggleStudentSelection" class="btn-close"></button>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <input type="text" class="form-control" placeholder="Поиск студентов..." 
+                           @bind="searchText" @bind:event="oninput" />
+                </div>
+                
+                <div style="max-height: 60vh; overflow-y: auto;">
+                    @foreach (var student in filteredStudents)
+                    {
+                        <div class="student-item">
+                            <input type="checkbox" 
+                                   class="student-checkbox"
+                                   checked="@student.Subjects.Contains(currentSubject)"
+                                   @onchange="@(e => ToggleStudentCourse(student, e.Value))" />
+                            <span>@student.FullName (@student.Login)</span>
+                        </div>
+                    }
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end; margin-top: 20px; gap: 10px;">
+                    <button @onclick="ToggleStudentSelection" class="btn btn-secondary">
+                        Отмена
+                    </button>
+                    <button @onclick="SaveStudentSelection" class="btn btn-primary">
+                        Сохранить
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private string currentSubject = "";
+    private List<TestModel> tests = new();
+    private List<Student> courseStudents = new();
+    private List<Student> allStudents = new();
+    private List<TestResult> results = new();
+    private bool isLoading = true;
+    private bool showStudentSelection = false;
+    private string searchText = "";
+
+    private List<Student> filteredStudents => 
+        allStudents.Where(s => s.FullName.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+                   s.Login.Contains(searchText, StringComparison.OrdinalIgnoreCase))
+                  .OrderBy(s => s.FullName)
+                  .ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Получаем предмет текущего преподавателя (в реальном приложении - из системы аутентификации)
+        var admin = await DbContext.Admins.FirstOrDefaultAsync(a => a.Login == "teacher_math");
+        currentSubject = admin?.Subject ?? "Математика";
+        
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        StateHasChanged();
+        
+        try
+        {
+            tests = await DbContext.Tests
+                .Where(t => t.Subject == currentSubject)
+                .ToListAsync();
+
+            allStudents = await DbContext.Students.ToListAsync();
+            
+            courseStudents = allStudents
+                .Where(s => s.Subjects.Contains(currentSubject))
+                .ToList();
+
+            results = await DbContext.TestResults
+                .Include(r => r.Test)
+                .Where(r => r.Test.Subject == currentSubject)
+                .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка загрузки данных: {ex.Message}");
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void NavigateToTests()
+    {
+        Navigation.NavigateTo("/tests");
+    }
+
+    private void ToggleStudentSelection()
+    {
+        showStudentSelection = !showStudentSelection;
+        if (showStudentSelection) searchText = "";
+    }
+
+    private void ToggleStudentCourse(Student student, object isChecked)
+    {
+        var subjects = student.Subjects;
+        if ((bool)isChecked)
+        {
+            if (!subjects.Contains(currentSubject))
+            {
+                subjects.Add(currentSubject);
+            }
+        }
+        else
+        {
+            subjects.Remove(currentSubject);
+        }
+        student.Subjects = subjects;
+    }
+
+    private async Task SaveStudentSelection()
+    {
+        try
+        {
+            foreach (var student in allStudents)
+            {
+                var dbStudent = await DbContext.Students.FindAsync(student.Id);
+                if (dbStudent != null)
+                {
+                    dbStudent.SubjectsString = student.SubjectsString;
+                }
+            }
+            
+            await DbContext.SaveChangesAsync();
+            await LoadData();
+            showStudentSelection = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка сохранения: {ex.Message}");
+        }
+    }
+}

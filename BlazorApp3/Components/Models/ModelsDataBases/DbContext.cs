@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using BlazorApp3.Models;
+﻿using BlazorApp3.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace BlazorApp3.Components.Models.ModelsDataBases
 {
@@ -9,38 +9,34 @@ namespace BlazorApp3.Components.Models.ModelsDataBases
         {
         }
 
+        public DbSet<Student> Students { get; set; }
+        public DbSet<Admin> Admins { get; set; }
         public DbSet<TestModel> Tests { get; set; }
         public DbSet<QuestionModel> Questions { get; set; }
-        public DbSet<Student> Students { get; set; }
         public DbSet<TestResult> TestResults { get; set; }
-        public DbSet<Admin> Admins { get; set; }
+        public DbSet<StudentTest> StudentTests { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            // Связь: Вопрос принадлежит тесту
-            modelBuilder.Entity<QuestionModel>()
-                .HasOne(q => q.Test)
-                .WithMany(t => t.Questions)
-                .HasForeignKey(q => q.TestId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<Student>()
+                .Property(s => s.SubjectsString)
+                .HasColumnName("subjects")
+                .HasDefaultValue("[]");
 
-            // Связь: Результат ссылается на тест
-            modelBuilder.Entity<TestResult>()
-                .HasOne(tr => tr.Test)
-                .WithMany()
-                .HasForeignKey(tr => tr.TestId)
-                .OnDelete(DeleteBehavior.Cascade);
+            modelBuilder.Entity<Admin>()
+                .Property(a => a.IsSuperAdmin)
+                .HasDefaultValue(false);
 
-            // Связь: Результат ссылается на студента
+            // Настройка связей
             modelBuilder.Entity<TestResult>()
                 .HasOne(tr => tr.Student)
                 .WithMany(s => s.TestResults)
-                .HasForeignKey(tr => tr.StudentId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .HasForeignKey(tr => tr.StudentId);
 
-            // Уникальный индекс на пару TestId + StudentId (если нельзя проходить один тест дважды)
             modelBuilder.Entity<TestResult>()
-                .HasIndex(tr => new { tr.TestId, tr.StudentId });
+                .HasOne(tr => tr.Test)
+                .WithMany()
+                .HasForeignKey(tr => tr.TestId);
         }
     }
 }

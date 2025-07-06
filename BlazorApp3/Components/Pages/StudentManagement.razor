@@ -1,0 +1,270 @@
+﻿@page "/student_management"
+@rendermode InteractiveServer
+@using BlazorApp3.Components.Models.ModelsDataBases
+@using BlazorApp3.Models
+@using Microsoft.EntityFrameworkCore
+@inject DataBaseContext DbContext
+@inject NavigationManager Navigation
+
+<style>
+    .student-management {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    .action-buttons {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+    }
+    .student-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .student-table th, .student-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    .student-table th {
+        background-color: #3498db;
+        color: white;
+        font-weight: 600;
+    }
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        width: 80%;
+        max-width: 500px;
+    }
+</style>
+
+<div class="student-management">
+    <h3>Управление студентами</h3>
+    
+    <div class="action-buttons">
+        <button class="btn btn-primary" @onclick="OpenAddStudentModal">
+            <i class="bi bi-plus-circle"></i> Добавить студента
+        </button>
+        <button class="btn btn-secondary" @onclick="NavigateToAdminMain">
+            <i class="bi bi-arrow-left"></i> Назад
+        </button>
+    </div>
+
+    @if (isLoading)
+    {
+        <p>Загрузка данных...</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="student-table">
+                <thead>
+                    <tr>
+                        <th>ФИО</th>
+                        <th>Дата рождения</th>
+                        <th>Логин</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var student in students)
+                    {
+                        <tr>
+                            <td>@student.FullName</td>
+                            <td>@student.BirthDate</td>
+                            <td>@student.Login</td>
+                            <td>
+                                <button class="btn btn-sm btn-warning me-2" @onclick="() => OpenEditStudentModal(student)">
+                                    <i class="bi bi-pencil"></i> Изменить
+                                </button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => OpenDeleteStudentModal(student)">
+                                    <i class="bi bi-trash"></i> Удалить
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <!-- Модальное окно добавления/редактирования -->
+    @if (showEditModal)
+    {
+        <div class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>@(isEditing ? "Редактирование" : "Добавление") студента</h5>
+                    <button @onclick="CloseEditModal" class="btn-close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group mb-3">
+                        <label>ФИО:</label>
+                        <InputText class="form-control" @bind-Value="currentStudent.FullName" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label>Дата рождения:</label>
+                        <InputText class="form-control" @bind-Value="currentStudent.BirthDate" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label>Логин:</label>
+                        <InputText class="form-control" @bind-Value="currentStudent.Login" />
+                    </div>
+                    <div class="form-group mb-3">
+                        <label>Пароль:</label>
+                        <InputText type="password" class="form-control" @bind-Value="currentStudent.Password" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" @onclick="SaveStudent">Сохранить</button>
+                    <button class="btn btn-secondary" @onclick="CloseEditModal">Отмена</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Модальное окно подтверждения удаления -->
+    @if (showDeleteModal)
+    {
+        <div class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>Подтверждение удаления</h5>
+                    <button @onclick="CloseDeleteModal" class="btn-close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Вы действительно хотите удалить студента <strong>@currentStudent.FullName</strong>?</p>
+                    <p class="text-danger">Все результаты тестирования также будут удалены!</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" @onclick="ConfirmDelete">Удалить</button>
+                    <button class="btn btn-secondary" @onclick="CloseDeleteModal">Отмена</button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Student> students = new();
+    private Student currentStudent = new();
+    private bool isLoading = true;
+    private bool showEditModal = false;
+    private bool showDeleteModal = false;
+    private bool isEditing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadStudents();
+    }
+
+    private async Task LoadStudents()
+    {
+        isLoading = true;
+        try
+        {
+            students = await DbContext.Students.ToListAsync();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OpenAddStudentModal()
+    {
+        currentStudent = new Student();
+        isEditing = false;
+        showEditModal = true;
+    }
+
+    private void OpenEditStudentModal(Student student)
+    {
+        currentStudent = new Student
+        {
+            Id = student.Id,
+            FullName = student.FullName,
+            BirthDate = student.BirthDate,
+            Login = student.Login,
+            Password = student.Password
+        };
+        isEditing = true;
+        showEditModal = true;
+    }
+
+    private void CloseEditModal()
+    {
+        showEditModal = false;
+    }
+
+    private async Task SaveStudent()
+    {
+        if (string.IsNullOrWhiteSpace(currentStudent.FullName) ||
+            string.IsNullOrWhiteSpace(currentStudent.Login) ||
+            string.IsNullOrWhiteSpace(currentStudent.Password))
+        {
+            return;
+        }
+
+        if (isEditing)
+        {
+            DbContext.Students.Update(currentStudent);
+        }
+        else
+        {
+            DbContext.Students.Add(currentStudent);
+        }
+
+        await DbContext.SaveChangesAsync();
+        await LoadStudents();
+        CloseEditModal();
+    }
+
+    private void OpenDeleteStudentModal(Student student)
+    {
+        currentStudent = student;
+        showDeleteModal = true;
+    }
+
+    private void CloseDeleteModal()
+    {
+        showDeleteModal = false;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        // Удаляем связанные результаты тестов
+        var results = await DbContext.TestResults
+            .Where(r => r.StudentId == currentStudent.Id)
+            .ToListAsync();
+        
+        DbContext.TestResults.RemoveRange(results);
+        
+        // Удаляем самого студента
+        DbContext.Students.Remove(currentStudent);
+        
+        await DbContext.SaveChangesAsync();
+        await LoadStudents();
+        CloseDeleteModal();
+    }
+
+    private void NavigateToAdminMain()
+    {
+        Navigation.NavigateTo("/admin_main");
+    }
+}

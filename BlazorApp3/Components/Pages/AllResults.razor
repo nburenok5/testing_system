@@ -1,0 +1,82 @@
+﻿@page "/all_results"
+@rendermode InteractiveServer
+@using BlazorApp3.Models
+@using Microsoft.EntityFrameworkCore
+@using BlazorApp3.Components.Models.ModelsDataBases
+@inject DataBaseContext DbContext
+@inject NavigationManager Navigation
+
+<h3>Общий журнал результатов</h3>
+
+<div class="mb-3">
+    <button class="btn btn-secondary" @onclick="NavigateToAdminMain">Назад</button>
+</div>
+
+@if (results == null || students == null || tests == null)
+{
+    <p>Загрузка данных...</p>
+}
+else
+{
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Студент</th>
+                @foreach (var test in tests)
+                {
+                    <th>@test.Title</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var student in students)
+            {
+                <tr>
+                    <td>@student.FullName</td>
+                    @foreach (var test in tests)
+                    {
+                        var result = results
+                            .Where(tr => tr.StudentId == student.Id && tr.TestId == test.Id)
+                            .OrderByDescending(tr => tr.DateTaken)
+                            .FirstOrDefault();
+
+                        <td style="text-align: center;">
+                            @if (result != null)
+                            {
+                                <span>@result.Score%</span><br />
+                                <small>@result.DateTaken</small>
+                            }
+                            else
+                            {
+                                <span>—</span>
+                            }
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<TestResult> results = new();
+    private List<Student> students = new();
+    private List<TestModel> tests = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        results = await DbContext.TestResults.ToListAsync();
+        students = await DbContext.Students.ToListAsync();
+        tests = await DbContext.Tests.Include(t => t.Questions).ToListAsync();
+    }
+
+    private void NavigateToAdminMain()
+    {
+        Navigation.NavigateTo("/admin_main");
+    }
+}

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Linq;
 
 namespace BlazorApp3.Models
 {
@@ -9,7 +10,7 @@ namespace BlazorApp3.Models
         public int Id { get; set; }
 
         [Required]
-        [Column("full_name")] // 👈 в БД поле в snake_case
+        [Column("full_name")]
         public string FullName { get; set; } = string.Empty;
 
         [Required]
@@ -24,7 +25,18 @@ namespace BlazorApp3.Models
         [Column("password")]
         public string Password { get; set; } = string.Empty;
 
-        public List<TestResult> TestResults { get; set; } = new();
-    }
+        [Column("subjects")]
+        public string SubjectsString { get; set; } = string.Empty;
 
+        [NotMapped]
+        public List<string> Subjects
+        {
+            get => string.IsNullOrEmpty(SubjectsString) 
+                ? new List<string>() 
+                : SubjectsString.Split(',').ToList();
+            set => SubjectsString = value != null ? string.Join(",", value) : "";
+        }
+
+        public List<TestResult> TestResults { get; set; } = new List<TestResult>();
+    }
 }

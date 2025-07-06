@@ -23,6 +23,8 @@ namespace BlazorApp3.Models
         [Required]
         [Column("password")]
         public string Password { get; set; } = string.Empty;
-    }
 
+        [Column("is_super_admin")]
+        public bool IsSuperAdmin { get; set; } = false;
+    }
 }

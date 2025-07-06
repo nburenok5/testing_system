@@ -6,46 +6,6 @@
 @inject DataBaseContext DbContext
 @inject NavigationManager Navigation
 
-<div class="login-wrapper">
-    <div class="login-card">
-        <h1>Тестирующая система</h1>
-        <h3>Вход в систему</h3>
-
-        <EditForm Model="@loginModel" OnValidSubmit="HandleValidSubmit">
-            <DataAnnotationsValidator />
-            <ValidationSummary />
-
-            @if (!string.IsNullOrEmpty(errorMessage))
-            {
-                <div class="error-message">@errorMessage</div>
-            }
-
-            <div class="form-group">
-                <label>Роль:</label>
-                <select @bind="selectedRole" class="form-control">
-                    <option value="student">Студент</option>
-                    <option value="admin">Администратор</option>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="login">Логин:</label>
-                <InputText id="login" class="form-control" @bind-Value="loginModel.Username" />
-            </div>
-
-            <div class="form-group">
-                <label for="password">Пароль:</label>
-                <InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password" />
-            </div>
-
-            <div class="button-group">
-                <button type="submit" class="btn btn-primary">Войти</button>
-                <button type="button" class="btn btn-secondary" @onclick="ClearFields">Очистить</button>
-            </div>
-        </EditForm>
-    </div>
-</div>
-
 <style>
     .login-wrapper {
         display: flex;
@@ -92,15 +52,67 @@
         margin-top: 20px;
     }
 
-    .error-message {
-        color: red;
-        margin-bottom: 15px;
-        text-align: center;
+    .alert-danger {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 1rem;
+        border: 1px solid transparent;
+        border-radius: 0.25rem;
+    }
+
+    .form-select {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 2.25rem 0.375rem 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
     }
 </style>
 
+<div class="login-wrapper">
+    <div class="login-card">
+        <h1>Тестирующая система</h1>
+        <h3>Вход в систему</h3>
+
+        <EditForm Model="@loginModel" OnValidSubmit="HandleValidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger">@errorMessage</div>
+            }
+
+            <div class="form-group mb-3">
+                <label class="form-label">Роль:</label>
+                <select class="form-select" @bind="selectedRole">
+                    <option value="student">Студент</option>
+                    <option value="admin">Администратор/Преподаватель</option>
+                </select>
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="form-label">Логин:</label>
+                <InputText class="form-control" @bind-Value="loginModel.Username" />
+            </div>
+
+            <div class="form-group mb-3">
+                <label class="form-label">Пароль:</label>
+                <InputText type="password" class="form-control" @bind-Value="loginModel.Password" />
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">Войти</button>
+                <button type="button" class="btn btn-secondary" @onclick="ClearFields">Очистить</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
 @code {
-    private LoginModel loginModel = new LoginModel();
+    private LoginModel loginModel = new();
     private string selectedRole = "student";
     private string errorMessage = string.Empty;
 
@@ -117,13 +129,13 @@
 
                 if (student == null)
                 {
-                    errorMessage = "Студент с таким логином не найден.";
+                    errorMessage = "Студент с таким логином не найден";
                     return;
                 }
 
                 if (student.Password != loginModel.Password)
                 {
-                    errorMessage = "Неверный пароль.";
+                    errorMessage = "Неверный пароль";
                     return;
                 }
 
@@ -131,22 +143,32 @@
             }
             else if (selectedRole == "admin")
             {
+                // Главный администратор (не хранится в базе)
+                if (loginModel.Username == "admin" && loginModel.Password == "admin")
+                {
+                    Navigation.NavigateTo("/admin_main");
+                    return;
+                }
+
+                // Проверка обычного преподавателя
                 var admin = await DbContext.Admins
-                    .FirstOrDefaultAsync(a => a.Login == loginModel.Username);
+                    .FirstOrDefaultAsync(a => a.Login == loginModel.Username && 
+                                           a.Password == loginModel.Password);
 
                 if (admin == null)
                 {
-                    errorMessage = "Администратор с таким логином не найден.";
+                    errorMessage = "Неверные учетные данные";
                     return;
                 }
 
-                if (admin.Password != loginModel.Password)
+                if (admin.IsSuperAdmin)
                 {
-                    errorMessage = "Неверный пароль администратора.";
-                    return;
+                    Navigation.NavigateTo("/admin_main");
                 }
-
-                Navigation.NavigateTo("/admin_main");
+                else
+                {
+                    Navigation.NavigateTo($"/journal?subject={Uri.EscapeDataString(admin.Subject)}");
+                }
             }
         }
         catch (Exception ex)
@@ -164,9 +186,9 @@
     public class LoginModel
     {
         [Required(ErrorMessage = "Логин обязателен")]
-        public string Username { get; set; }
+        public string Username { get; set; } = string.Empty;
 
         [Required(ErrorMessage = "Пароль обязателен")]
-        public string Password { get; set; }
+        public string Password { get; set; } = string.Empty;
     }
 }

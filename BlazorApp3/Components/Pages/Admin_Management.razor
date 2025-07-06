@@ -1,0 +1,288 @@
+﻿@page "/admin_management"
+@rendermode InteractiveServer
+@using BlazorApp3.Components.Models.ModelsDataBases
+@using BlazorApp3.Models
+@using Microsoft.EntityFrameworkCore
+@inject DataBaseContext DbContext
+@inject NavigationManager Navigation
+
+<style>
+    .admin-management {
+        max-width: 1200px;
+        margin: 2rem auto;
+        padding: 0 1.5rem;
+    }
+    .action-buttons {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+    }
+    .admin-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .admin-table th, .admin-table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    .admin-table th {
+        background-color: #3498db;
+        color: white;
+        font-weight: 600;
+    }
+    .badge-admin {
+        background-color: #28a745;
+        color: white;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+    .badge-teacher {
+        background-color: #17a2b8;
+        color: white;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+</style>
+
+<div class="admin-management">
+    <h3>Управление преподавателями</h3>
+    
+    <div class="action-buttons">
+        <button class="btn btn-primary" @onclick="OpenAddAdminModal">
+            <i class="bi bi-plus-circle"></i> Добавить преподавателя
+        </button>
+        <button class="btn btn-secondary" @onclick="NavigateToAdminMain">
+            <i class="bi bi-arrow-left"></i> Назад
+        </button>
+    </div>
+
+    @if (isLoading)
+    {
+        <p>Загрузка данных...</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ФИО</th>
+                        <th>Предмет</th>
+                        <th>Логин</th>
+                        <th>Роль</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var admin in admins)
+                    {
+                        <tr>
+                            <td>@admin.FullName</td>
+                            <td>@admin.Subject</td>
+                            <td>@admin.Login</td>
+                            <td>
+                                @if (admin.IsSuperAdmin)
+                                {
+                                    <span class="badge-admin">Администратор</span>
+                                }
+                                else
+                                {
+                                    <span class="badge-teacher">Преподаватель</span>
+                                }
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-warning me-2" @onclick="() => OpenEditAdminModal(admin)">
+                                    <i class="bi bi-pencil"></i> Изменить
+                                </button>
+                                <button class="btn btn-sm btn-danger" @onclick="() => OpenDeleteAdminModal(admin)">
+                                    <i class="bi bi-trash"></i> Удалить
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    <!-- Модальное окно добавления/редактирования -->
+    @if (showEditModal)
+    {
+        <div class="modal" style="display: block; background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">@(isEditing ? "Редактирование" : "Добавление") преподавателя</h5>
+                        <button type="button" class="btn-close" @onclick="CloseEditModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group mb-3">
+                            <label>ФИО:</label>
+                            <InputText class="form-control" @bind-Value="currentAdmin.FullName" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>Предмет:</label>
+                            <InputText class="form-control" @bind-Value="currentAdmin.Subject" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>Логин:</label>
+                            <InputText class="form-control" @bind-Value="currentAdmin.Login" />
+                        </div>
+                        <div class="form-group mb-3">
+                            <label>Пароль:</label>
+                            <InputText type="password" class="form-control" @bind-Value="currentAdmin.Password" />
+                        </div>
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" 
+                                   @bind="currentAdmin.IsSuperAdmin" />
+                            <label class="form-check-label">
+                                Администратор системы
+                            </label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-primary" @onclick="SaveAdmin">
+                            Сохранить
+                        </button>
+                        <button class="btn btn-secondary" @onclick="CloseEditModal">
+                            Отмена
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Модальное окно подтверждения удаления -->
+    @if (showDeleteModal)
+    {
+        <div class="modal" style="display: block; background: rgba(0,0,0,0.5);">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Подтверждение удаления</h5>
+                        <button type="button" class="btn-close" @onclick="CloseDeleteModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Вы действительно хотите удалить преподавателя <strong>@currentAdmin.FullName</strong>?</p>
+                        <p class="text-danger">Все связанные тесты останутся в системе.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-danger" @onclick="ConfirmDelete">
+                            Удалить
+                        </button>
+                        <button class="btn btn-secondary" @onclick="CloseDeleteModal">
+                            Отмена
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<Admin> admins = new();
+    private Admin currentAdmin = new();
+    private bool isLoading = true;
+    private bool showEditModal = false;
+    private bool showDeleteModal = false;
+    private bool isEditing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAdmins();
+    }
+
+    private async Task LoadAdmins()
+    {
+        isLoading = true;
+        try
+        {
+            admins = await DbContext.Admins.ToListAsync();
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OpenAddAdminModal()
+    {
+        currentAdmin = new Admin();
+        isEditing = false;
+        showEditModal = true;
+    }
+
+    private void OpenEditAdminModal(Admin admin)
+    {
+        currentAdmin = new Admin
+        {
+            Id = admin.Id,
+            FullName = admin.FullName,
+            Subject = admin.Subject,
+            Login = admin.Login,
+            Password = admin.Password,
+            IsSuperAdmin = admin.IsSuperAdmin
+        };
+        isEditing = true;
+        showEditModal = true;
+    }
+
+    private void CloseEditModal()
+    {
+        showEditModal = false;
+    }
+
+    private async Task SaveAdmin()
+    {
+        if (string.IsNullOrWhiteSpace(currentAdmin.FullName) || 
+            string.IsNullOrWhiteSpace(currentAdmin.Subject) ||
+            string.IsNullOrWhiteSpace(currentAdmin.Login) ||
+            string.IsNullOrWhiteSpace(currentAdmin.Password))
+        {
+            return;
+        }
+
+        if (isEditing)
+        {
+            DbContext.Admins.Update(currentAdmin);
+        }
+        else
+        {
+            DbContext.Admins.Add(currentAdmin);
+        }
+
+        await DbContext.SaveChangesAsync();
+        await LoadAdmins();
+        CloseEditModal();
+    }
+
+    private void OpenDeleteAdminModal(Admin admin)
+    {
+        currentAdmin = admin;
+        showDeleteModal = true;
+    }
+
+    private void CloseDeleteModal()
+    {
+        showDeleteModal = false;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        DbContext.Admins.Remove(currentAdmin);
+        await DbContext.SaveChangesAsync();
+        await LoadAdmins();
+        CloseDeleteModal();
+    }
+
+    private void NavigateToAdminMain()
+    {
+        Navigation.NavigateTo("/admin_main");
+    }
+}

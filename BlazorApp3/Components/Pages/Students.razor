@@ -6,103 +6,112 @@
 @inject DataBaseContext DbContext
 @inject NavigationManager Navigation
 
-<div class="mb-3">
-    <button class="btn btn-primary" @onclick="OpenAllResultsModal">Показать все результаты</button>
-</div>
-
-@if (students == null || allTests == null)
+@if (currentAdmin == null)
 {
     <p>Загрузка данных...</p>
 }
 else
 {
-    <table class="table table-bordered">
-        <thead>
-            <tr>
-                <th>ФИО студента</th>
-                @foreach (var test in filteredTests)
-                {
-                    <th style="text-align: center; min-width: 100px;">@test.Title</th>
-                }
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var student in students)
-            {
+    <div class="mb-3">
+        <h3>Результаты студентов @(currentAdmin.IsSuperAdmin ? "" : "по предмету " + currentAdmin.Subject)</h3>
+        <button class="btn btn-primary" @onclick="OpenAllResultsModal">Показать все результаты</button>
+        <button class="btn btn-secondary" @onclick="NavigateToAdminMain">Назад</button>
+    </div>
+
+    @if (students == null || allTests == null)
+    {
+        <p>Загрузка данных...</p>
+    }
+    else
+    {
+        <table class="table table-bordered">
+            <thead>
                 <tr>
-                    <td>@student.FullName</td>
+                    <th>ФИО студента</th>
                     @foreach (var test in filteredTests)
                     {
-                        var result = student.TestResults
-                            .Where(tr => tr.TestId == test.Id)
-                            .OrderByDescending(tr => tr.DateTaken)
-                            .FirstOrDefault();
-
-                        <td style="text-align: center;">
-                            @if (result != null)
-                            {
-                                <span>@result.Score%</span><br />
-                                <small>@result.DateTaken</small>
-                            }
-                            else
-                            {
-                                <span>—</span>
-                            }
-                        </td>
+                        <th style="text-align: center; min-width: 100px;">@test.Title</th>
                     }
                 </tr>
-            }
-        </tbody>
-    </table>
-}
+            </thead>
+            <tbody>
+                @foreach (var student in students)
+                {
+                    <tr>
+                        <td>@student.FullName</td>
+                        @foreach (var test in filteredTests)
+                        {
+                            var result = student.TestResults
+                                .Where(tr => tr.TestId == test.Id)
+                                .OrderByDescending(tr => tr.DateTaken)
+                                .FirstOrDefault();
 
-@if (showAllResultsModal)
-{
-    <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Все попытки: @selectedStudent?.FullName - @selectedTest?.Title</h5>
-                    <button type="button" class="btn-close" @onclick="CloseAllResultsModal"></button>
-                </div>
-                <div class="modal-body">
-                    @if (testAttempts != null && testAttempts.Any())
-                    {
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Дата и время</th>
-                                    <th>Результат</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var attempt in testAttempts.OrderByDescending(a => a.DateTaken))
+                            <td style="text-align: center;">
+                                @if (result != null)
                                 {
-                                    <tr>
-                                        <td>@($"{attempt.DateTaken} {attempt.TimeTaken}")</td>
-                                        <td>@attempt.Score%</td>
-                                    </tr>
+                                    <span>@result.Score%</span><br />
+                                    <small>@result.DateTaken</small>
                                 }
-                            </tbody>
-                        </table>
-                    }
-                    else
-                    {
-                        <p>Нет данных.</p>
-                    }
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary" @onclick="CloseAllResultsModal">Закрыть</button>
+                                else
+                                {
+                                    <span>—</span>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+
+    @if (showAllResultsModal)
+    {
+        <div class="modal show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Все попытки: @selectedStudent?.FullName - @selectedTest?.Title</h5>
+                        <button type="button" class="btn-close" @onclick="CloseAllResultsModal"></button>
+                    </div>
+                    <div class="modal-body">
+                        @if (testAttempts != null && testAttempts.Any())
+                        {
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Дата и время</th>
+                                        <th>Результат</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var attempt in testAttempts.OrderByDescending(a => a.DateTaken))
+                                    {
+                                        <tr>
+                                            <td>@($"{attempt.DateTaken} {attempt.TimeTaken}")</td>
+                                            <td>@attempt.Score%</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        }
+                        else
+                        {
+                            <p>Нет данных.</p>
+                        }
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" @onclick="CloseAllResultsModal">Закрыть</button>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    }
 }
 
 @code {
     private List<Student>? students;
     private List<TestModel>? allTests;
-    private List<TestModel>? filteredTests => selectedTestIds.Any()
+    private List<TestModel> filteredTests => selectedTestIds.Any()
         ? allTests?.Where(t => selectedTestIds.Contains(t.Id)).ToList()
         : allTests;
 
@@ -113,9 +122,19 @@ else
     private Student? selectedStudent;
     private TestModel? selectedTest;
     private List<TestResult>? testAttempts;
+    private Admin? currentAdmin;
 
     protected override async Task OnInitializedAsync()
     {
+        // Получаем текущего админа (в реальном приложении нужно использовать аутентификацию)
+        currentAdmin = await DbContext.Admins.FirstOrDefaultAsync(a => a.Login == "admin" && a.Password == "admin");
+        
+        // Для примера - просто получаем первого админа
+        if (currentAdmin == null && DbContext.Admins.Any())
+        {
+            currentAdmin = await DbContext.Admins.FirstAsync();
+        }
+
         await LoadAllData();
     }
 
@@ -125,10 +144,23 @@ else
             .OrderBy(t => t.Title)
             .ToListAsync();
 
+        // Фильтруем тесты по предмету, если это не суперадмин
+        if (currentAdmin != null && !currentAdmin.IsSuperAdmin)
+        {
+            allTests = allTests.Where(t => t.Subject == currentAdmin.Subject).ToList();
+        }
+
         students = await DbContext.Students
             .Include(s => s.TestResults)
             .ThenInclude(tr => tr.Test)
             .ToListAsync();
+
+        // Фильтруем студентов по предмету, если это не суперадмин
+        if (currentAdmin != null && !currentAdmin.IsSuperAdmin)
+        {
+            // В реальном приложении нужно проверять Subjects студента
+            // Для примера просто показываем всех студентов
+        }
 
         if (selectAllTests && allTests != null)
         {
@@ -155,5 +187,10 @@ else
     private void CloseAllResultsModal()
     {
         showAllResultsModal = false;
+    }
+
+    private void NavigateToAdminMain()
+    {
+        Navigation.NavigateTo("/admin_main");
     }
 }

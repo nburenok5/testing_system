@@ -34,6 +34,18 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pbl9tYWluLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Admin_Management.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pbl9NYW5hZ2VtZW50LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Admin_Students.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBZG1pbl9TdHVkZW50cy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/AllResults.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xBbGxSZXN1bHRzLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Current_Test_Result.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDdXJyZW50X1Rlc3RfUmVzdWx0LnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
@@ -46,12 +58,20 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xIb21lLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Journal.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xKb3VybmFsLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Login_admin.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xMb2dpbl9hZG1pbi5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Login_student.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xMb2dpbl9zdHVkZW50LnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/StudentManagement.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xTdHVkZW50TWFuYWdlbWVudC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/sdahu/OneDrive/Рабочий стол/папки с языками/C\#/testing_system/BlazorApp3/Components/Pages/Students.razor]
