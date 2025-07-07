@@ -12,7 +12,7 @@
         margin: 2rem auto;
         padding: 0 1.5rem;
     }
-    
+
     .subject-tabs {
         display: flex;
         flex-wrap: wrap;
@@ -21,7 +21,7 @@
         margin-bottom: 1rem;
         padding-bottom: 0.5rem;
     }
-    
+
     .subject-tab {
         padding: 0.5rem 1rem;
         cursor: pointer;
@@ -30,38 +30,38 @@
         background-color: #f8f9fa;
         transition: all 0.2s ease;
     }
-    
+
     .subject-tab.active {
         background-color: #3498db;
         color: white;
         border-color: #3498db;
         font-weight: 600;
     }
-    
+
     .table-responsive {
         overflow-x: auto;
     }
-    
+
     .table {
         width: 100%;
         border-collapse: collapse;
     }
-    
+
     .table th, .table td {
         padding: 0.75rem;
         border: 1px solid #dee2e6;
         text-align: left;
     }
-    
+
     .table th {
         background-color: #3498db;
         color: white;
     }
-    
+
     .table tr:nth-child(even) {
         background-color: #f8f9fa;
     }
-    
+
     .loading-spinner {
         display: inline-block;
         width: 2rem;
@@ -71,9 +71,24 @@
         border-radius: 50%;
         animation: spinner-border 0.75s linear infinite;
     }
-    
+
     @@keyframes spinner-border {
-        to { transform: rotate(360deg); }
+         to { transform: rotate(360deg); }
+     }
+
+    .result-cell {
+        cursor: pointer;
+        transition: background-color 0.2s;
+        text-align: center !important;
+    }
+
+    .result-cell:hover {
+        background-color: #e9ecef;
+    }
+
+    .modal {
+        display: block;
+        background-color: rgba(0,0,0,0.5);
     }
 </style>
 
@@ -82,135 +97,202 @@
         <h3>Общий журнал успеваемости</h3>
         <button class="btn btn-secondary" @onclick="NavigateToAdminMain">Назад</button>
     </div>
-    
+
     <div class="subject-tabs">
         @foreach (var subject in allSubjects)
         {
-            <div class="subject-tab @(currentSubject == subject ? "active" : "")" 
-                 @onclick="() => ChangeSubject(subject)">
-                @subject
-            </div>
+        <div class="subject-tab @(currentSubject == subject ? "active" : "")"
+             @onclick="() => ChangeSubject(subject)">
+            @subject
+        </div>
         }
     </div>
 
     @if (isLoading)
     {
-        <div class="text-center py-4">
-            <span class="loading-spinner"></span>
-            <p>Загрузка данных...</p>
-        </div>
+    <div class="text-center py-4">
+        <span class="loading-spinner"></span>
+        <p>Загрузка данных...</p>
+    </div>
     }
     else
     {
-        <div class="table-responsive">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
-                        <th>Студент</th>
-                        @foreach (var test in filteredTests)
-                        {
-                            <th>@test.Title</th>
-                        }
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var student in allStudents)
-                    {
-                        <tr>
-                            <td>@student.FullName</td>
-                            @foreach (var test in filteredTests)
-                            {
-                                var result = filteredResults
-                                    .Where(tr => tr.StudentId == student.Id && tr.TestId == test.Id)
-                                    .OrderByDescending(tr => tr.DateTaken)
-                                    .FirstOrDefault();
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+            <tr>
+                <th>Студент</th>
+                @foreach (var test in filteredTests)
+                {
+                <th>@test.Title</th>
+                }
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var student in allStudents)
+            {
+            <tr>
+                <td>@student.FullName</td>
+                @foreach (var test in filteredTests)
+                {
+                var result = filteredResults
+                .Where(tr => tr.StudentId == student.Id && tr.TestId == test.Id)
+                .OrderByDescending(tr => tr.DateTaken)
+                .FirstOrDefault();
 
-                                <td style="text-align: center;">
-                                    @if (result != null)
-                                    {
-                                        <span>@result.Score%</span><br />
-                                        <small>@($"{result.DateTaken:dd.MM.yyyy}")</small>
-                                    }
-                                    else
-                                    {
-                                        <span>—</span>
-                                    }
-                                </td>
-                            }
-                        </tr>
+                <td class="result-cell" @onclick="() => ShowTestAttempts(student, test)">
+                    @if (result != null)
+                    {
+                    <span>@result.Score%</span><br />
+                    <small>@result.DateTaken</small>
                     }
-                </tbody>
-            </table>
-        </div>
+                    else
+                    {
+                    <span>—</span>
+                    }
+                </td>
+                }
+            </tr>
+            }
+            </tbody>
+        </table>
+    </div>
     }
 </div>
 
+@if (showAttemptsModal)
+{
+<div class="modal" tabindex="-1" style="display: block;">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">История прохождений: @selectedStudent?.FullName - @selectedTest?.Title</h5>
+                <button type="button" class="btn-close" @onclick="CloseAttemptsModal"></button>
+            </div>
+            <div class="modal-body">
+                @if (testAttempts != null && testAttempts.Any())
+                {
+                <table class="table">
+                    <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Время</th>
+                        <th>Результат</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var attempt in testAttempts)
+                    {
+                    <tr>
+                        <td>@attempt.DateTaken</td>
+                        <td>@attempt.TimeTaken</td>
+                        <td>@attempt.Score%</td>
+                    </tr>
+                    }
+                    </tbody>
+                </table>
+                }
+                else
+                {
+                <p>Нет данных о прохождениях теста.</p>
+                }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @onclick="CloseAttemptsModal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+}
+
 @code {
-    private string currentSubject = "Все предметы";
-    private List<string> allSubjects = new();
-    private List<TestModel> allTests = new();
-    private List<TestModel> filteredTests = new();
-    private List<TestResult> allResults = new();
-    private List<TestResult> filteredResults = new();
-    private List<Student> allStudents = new();
-    private bool isLoading = true;
+private string currentSubject = "Все предметы";
+private List<string> allSubjects = new();
+private List<TestModel> allTests = new();
+private List<TestModel> filteredTests = new();
+private List<TestResult> allResults = new();
+private List<TestResult> filteredResults = new();
+private List<Student> allStudents = new();
+private bool isLoading = true;
+private bool showAttemptsModal = false;
+private Student? selectedStudent;
+private TestModel? selectedTest;
+private List<TestResult>? testAttempts;
 
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadData();
-        
-        allSubjects = await DbContext.Tests
-            .Select(t => t.Subject)
-            .Distinct()
-            .OrderBy(s => s)
-            .ToListAsync();
-        
-        allSubjects.Insert(0, "Все предметы");
-    }
+protected override async Task OnInitializedAsync()
+{
+await LoadData();
 
-    private async Task LoadData()
-    {
-        isLoading = true;
-        
-        allTests = await DbContext.Tests
-            .Include(t => t.Questions)
-            .OrderBy(t => t.Title)
-            .ToListAsync();
-            
-        allResults = await DbContext.TestResults
-            .Include(r => r.Test)
-            .Include(r => r.Student)
-            .ToListAsync();
-            
-        allStudents = await DbContext.Students
-            .OrderBy(s => s.FullName)
-            .ToListAsync();
-        
-        FilterData();
-        
-        isLoading = false;
-    }
+allSubjects = await DbContext.Tests
+.Select(t => t.Subject)
+.Distinct()
+.OrderBy(s => s)
+.ToListAsync();
 
-    private void ChangeSubject(string subject)
-    {
-        currentSubject = subject;
-        FilterData();
-        StateHasChanged();
-    }
+allSubjects.Insert(0, "Все предметы");
+}
 
-    private void FilterData()
-    {
-        filteredTests = currentSubject == "Все предметы" 
-            ? allTests 
-            : allTests.Where(t => t.Subject == currentSubject).ToList();
-            
-        filteredResults = currentSubject == "Все предметы"
-            ? allResults
-            : allResults.Where(r => r.Test?.Subject == currentSubject).ToList();
-    }
+private async Task LoadData()
+{
+isLoading = true;
 
-    private void NavigateToAdminMain()
-    {
-        Navigation.NavigateTo("/admin_main");
-    }
+allTests = await DbContext.Tests
+.Include(t => t.Questions)
+.OrderBy(t => t.Title)
+.ToListAsync();
+
+allResults = await DbContext.TestResults
+.Include(r => r.Test)
+.Include(r => r.Student)
+.ToListAsync();
+
+allStudents = await DbContext.Students
+.OrderBy(s => s.FullName)
+.ToListAsync();
+
+FilterData();
+
+isLoading = false;
+}
+
+private void ChangeSubject(string subject)
+{
+currentSubject = subject;
+FilterData();
+StateHasChanged();
+}
+
+private void FilterData()
+{
+filteredTests = currentSubject == "Все предметы"
+? allTests
+: allTests.Where(t => t.Subject == currentSubject).ToList();
+
+filteredResults = currentSubject == "Все предметы"
+? allResults
+: allResults.Where(r => r.Test?.Subject == currentSubject).ToList();
+}
+
+private async Task ShowTestAttempts(Student student, TestModel test)
+{
+selectedStudent = student;
+selectedTest = test;
+
+testAttempts = await DbContext.TestResults
+.Where(tr => tr.StudentId == student.Id && tr.TestId == test.Id)
+.OrderByDescending(tr => tr.DateTaken)
+.ToListAsync();
+
+showAttemptsModal = true;
+}
+
+private void CloseAttemptsModal()
+{
+showAttemptsModal = false;
+}
+
+private void NavigateToAdminMain()
+{
+Navigation.NavigateTo("/admin_main");
+}
 }
