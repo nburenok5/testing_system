@@ -86,8 +86,9 @@ else
                     @if (question.QuestionType == "Text")
                     {
                         <textarea class="text-answer-input" rows="3" 
-                                  @bind="textAnswers[currentQuestionIndex]"
-                                  placeholder="Введите ваш ответ"></textarea>
+                              @bind="textAnswers[currentQuestionIndex]"
+                              @bind:event="oninput"
+                              placeholder="Введите ваш ответ"></textarea>
                     }
                     else
                     {
@@ -147,13 +148,13 @@ else
     private int currentQuestionIndex = 0;
     private QuestionModel currentQuestion => test!.Questions[currentQuestionIndex];
 
-    // Для вопросов с выбором (Single/Multiple)
+    // Для вопросов с выбором (чекбоксы/радиокнопки)
     private Dictionary<int, List<int>> selectedAnswers = new();
     
-    // Для текстовых вопросов (Text)
+    // Для текстовых вопросов 
     private Dictionary<int, string> textAnswers = new();
 
-    private TimeSpan testDuration = TimeSpan.FromMinutes(30);
+    private TimeSpan testDuration = TimeSpan.FromMinutes(10);
     private DateTime startTime;
     private TimeSpan timeRemaining;
     private System.Timers.Timer? countdownTimer;
@@ -167,9 +168,21 @@ else
 
         if (test != null && test.Questions.Count > 0)
         {
+    // Инициализация словарей для всех вопросов
+            for (int i = 0; i < test.Questions.Count; i++)
+            {
+                if (test.Questions[i].QuestionType == "Text")
+                {
+                    textAnswers[i] = string.Empty;
+                }
+                else
+                {
+                    selectedAnswers[i] = new List<int>();
+                }
+            }
+
             startTime = DateTime.UtcNow;
             timeRemaining = testDuration;
-
             countdownTimer = new System.Timers.Timer(1000);
             countdownTimer.Elapsed += UpdateTime;
             countdownTimer.Start();
@@ -212,7 +225,10 @@ else
 
     private bool IsCurrentQuestionAnswered()
     {
-        var question = currentQuestion;
+        if (test == null || currentQuestionIndex < 0 || currentQuestionIndex >= test.Questions.Count)
+            return false;
+
+        var question = test.Questions[currentQuestionIndex];
         
         if (question.QuestionType == "Text")
         {
