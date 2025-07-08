@@ -91,28 +91,28 @@
 </div>
 
 @code {
-[Parameter]
-[SupplyParameterFromQuery(Name = "subject")]
-public string CurrentSubject { get; set; } = "Не указан";
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "subject")]
+    public string CurrentSubject { get; set; } = "Не указан";
 
-protected override void OnInitialized()
-{
-if (string.IsNullOrEmpty(CurrentSubject))
-{
-// Дополнительная проверка на случай проблем с параметрами
-var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-CurrentSubject = query["subject"] ?? "Не указан";
-}
-}
+    protected override void OnInitialized()
+    {
+    if (string.IsNullOrEmpty(CurrentSubject))
+    {
+    // Дополнительная проверка на случай проблем с параметрами
+    var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+    var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+    CurrentSubject = query["subject"] ?? "Не указан";
+    }
+    }
 
-private void NavigateToTests(string subject)
-{
-Navigation.NavigateTo($"/tests?subject={Uri.EscapeDataString(subject)}");
-}
+    private void NavigateToTests(string subject)
+    {
+    Navigation.NavigateTo($"/tests?subject={Uri.EscapeDataString(subject)}");
+    }
 
-private void NavigateToStudents(string subject)
-{
-Navigation.NavigateTo($"/journal?subject={Uri.EscapeDataString(subject)}");
-}
-}
+    private void NavigateToStudents(string subject)
+    {
+    Navigation.NavigateTo($"/journal?subject={Uri.EscapeDataString(subject)}");
+    }
+    }

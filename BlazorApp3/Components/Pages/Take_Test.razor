@@ -1,10 +1,60 @@
-﻿@page "/take_test/{testId:int}/{studentId:int}" 
+﻿@page "/take_test/{testId:int}/{studentId:int}"
 @rendermode InteractiveServer
 @using BlazorApp3.Models
 @using BlazorApp3.Components.Models.ModelsDataBases
 @using Microsoft.EntityFrameworkCore
+@implements IDisposable
 @inject DataBaseContext DbContext
 @inject NavigationManager Navigation
+
+<style>
+    .test-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+    
+    .timer {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #dc3545;
+        margin-bottom: 20px;
+    }
+    
+    .question-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .options-list {
+        margin-top: 15px;
+    }
+    
+    .form-check {
+        margin-bottom: 10px;
+    }
+    
+    .text-answer-input {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        margin-top: 10px;
+    }
+    
+    .navigation-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+    
+    .question-type-badge {
+        margin-left: 10px;
+        font-size: 0.8rem;
+    }
+</style>
 
 @if (test == null)
 {
@@ -14,27 +64,47 @@ else
 {
     <div class="test-container">
         <h3>Тест: @test.Title</h3>
-        
+
+        <div class="timer">
+            Оставшееся время: @timeRemaining.ToString(@"mm\:ss")
+        </div>
+
         @if (currentQuestionIndex >= 0 && currentQuestionIndex < test.Questions.Count)
         {
+            var question = currentQuestion;
+            
             <div class="question-card">
-                <h4>Вопрос @(currentQuestionIndex + 1) из @test.Questions.Count</h4>
-                <p>@currentQuestion.QuestionText</p>
-                
+                <h4>
+                    Вопрос @(currentQuestionIndex + 1) из @test.Questions.Count
+                    <span class="badge bg-secondary question-type-badge">
+                        @GetQuestionTypeDisplayName(question.QuestionType)
+                    </span>
+                </h4>
+                <p>@question.QuestionText</p>
+
                 <div class="options-list">
-                    @foreach (var option in currentQuestion.AnswerOptionsList.Select((value, index) => new { value, index }))
+                    @if (question.QuestionType == "Text")
                     {
-                        <div class="form-check">
-                            <input class="form-check-input" 
-                                   type="radio" 
-                                   name="questionOptions" 
-                                   id="option_@option.index"
-                                   @onchange="() => SelectAnswer(option.index)"
-                                   checked="@(selectedAnswerIndex == option.index)">
-                            <label class="form-check-label" for="option_@option.index">
-                                @option.value
-                            </label>
-                        </div>
+                        <textarea class="text-answer-input" rows="3" 
+                                  @bind="textAnswers[currentQuestionIndex]"
+                                  placeholder="Введите ваш ответ"></textarea>
+                    }
+                    else
+                    {
+                        @foreach (var option in question.AnswerOptionsList.Select((value, index) => new { value, index }))
+                        {
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="@(question.QuestionType == "Multiple" ? "checkbox" : "radio")"
+                                       name="questionOptions"
+                                       id="option_@option.index"
+                                       @onchange="() => SelectAnswer(option.index)"
+                                       checked="@IsOptionSelected(option.index)">
+                                <label class="form-check-label" for="option_@option.index">
+                                    @option.value
+                                </label>
+                            </div>
+                        }
                     }
                 </div>
             </div>
@@ -46,16 +116,18 @@ else
                         Назад
                     </button>
                 }
-                
+
                 @if (currentQuestionIndex < test.Questions.Count - 1)
                 {
-                    <button class="btn btn-primary" @onclick="NextQuestion" disabled="@(selectedAnswerIndex == -1)">
+                    <button class="btn btn-primary" @onclick="NextQuestion" 
+                            disabled="@(!IsCurrentQuestionAnswered())">
                         Далее
                     </button>
                 }
                 else
                 {
-                    <button class="btn btn-success" @onclick="FinishTest" disabled="@(selectedAnswerIndex == -1)">
+                    <button class="btn btn-success" @onclick="FinishTest" 
+                            disabled="@(!IsCurrentQuestionAnswered())">
                         Завершить тест
                     </button>
                 }
@@ -67,18 +139,25 @@ else
 @code {
     [Parameter]
     public int testId { get; set; }
-    
+
     [Parameter]
     public int studentId { get; set; }
 
     private TestModel? test;
     private int currentQuestionIndex = 0;
-
     private QuestionModel currentQuestion => test!.Questions[currentQuestionIndex];
 
-    private int selectedAnswerIndex = -1;
+    // Для вопросов с выбором (Single/Multiple)
+    private Dictionary<int, List<int>> selectedAnswers = new();
+    
+    // Для текстовых вопросов (Text)
+    private Dictionary<int, string> textAnswers = new();
 
-    private Dictionary<int, int> answers = new();
+    private TimeSpan testDuration = TimeSpan.FromMinutes(30);
+    private DateTime startTime;
+    private TimeSpan timeRemaining;
+    private System.Timers.Timer? countdownTimer;
+    private bool isTimeOver = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -88,14 +167,63 @@ else
 
         if (test != null && test.Questions.Count > 0)
         {
-            selectedAnswerIndex = -1;
+            startTime = DateTime.UtcNow;
+            timeRemaining = testDuration;
+
+            countdownTimer = new System.Timers.Timer(1000);
+            countdownTimer.Elapsed += UpdateTime;
+            countdownTimer.Start();
         }
+    }
+
+    private bool IsOptionSelected(int optionIndex)
+    {
+        return selectedAnswers.TryGetValue(currentQuestionIndex, out var answers) && 
+               answers.Contains(optionIndex);
     }
 
     private void SelectAnswer(int answerIndex)
     {
-        selectedAnswerIndex = answerIndex;
-        answers[currentQuestionIndex] = answerIndex;
+        var question = currentQuestion;
+        
+        if (question.QuestionType == "Multiple")
+        {
+            if (!selectedAnswers.ContainsKey(currentQuestionIndex))
+            {
+                selectedAnswers[currentQuestionIndex] = new List<int>();
+            }
+            
+            var answers = selectedAnswers[currentQuestionIndex];
+            
+            if (answers.Contains(answerIndex))
+            {
+                answers.Remove(answerIndex);
+            }
+            else
+            {
+                answers.Add(answerIndex);
+            }
+        }
+        else if (question.QuestionType == "Single")
+        {
+            selectedAnswers[currentQuestionIndex] = new List<int> { answerIndex };
+        }
+    }
+
+    private bool IsCurrentQuestionAnswered()
+    {
+        var question = currentQuestion;
+        
+        if (question.QuestionType == "Text")
+        {
+            return textAnswers.TryGetValue(currentQuestionIndex, out var answer) && 
+                   !string.IsNullOrWhiteSpace(answer);
+        }
+        else
+        {
+            return selectedAnswers.TryGetValue(currentQuestionIndex, out var answers) && 
+                   answers.Any();
+        }
     }
 
     private void NextQuestion()
@@ -103,7 +231,6 @@ else
         if (currentQuestionIndex < test!.Questions.Count - 1)
         {
             currentQuestionIndex++;
-            selectedAnswerIndex = answers.TryGetValue(currentQuestionIndex, out var answer) ? answer : -1;
         }
     }
 
@@ -112,7 +239,6 @@ else
         if (currentQuestionIndex > 0)
         {
             currentQuestionIndex--;
-            selectedAnswerIndex = answers.TryGetValue(currentQuestionIndex, out var answer) ? answer : -1;
         }
     }
 
@@ -120,40 +246,114 @@ else
     {
         if (test == null) return;
 
-        int correctAnswers = 0;
+        countdownTimer?.Stop();
 
+        int correctAnswers = 0;
         for (int i = 0; i < test.Questions.Count; i++)
         {
-            if (answers.TryGetValue(i, out var selectedIndex))
+            var question = test.Questions[i];
+            
+            if (question.QuestionType == "Text")
             {
-                var options = test.Questions[i].AnswerOptionsList;
-                if (selectedIndex >= 0 && selectedIndex < options.Count)
+                if (textAnswers.TryGetValue(i, out var answer) && 
+                    string.Equals(answer.Trim(), question.CorrectAnswer.Trim(), StringComparison.OrdinalIgnoreCase))
                 {
-                    var selectedText = options[selectedIndex];
-                    var correctText = test.Questions[i].CorrectAnswer;
-                    if (string.Equals(selectedText.Trim(), correctText.Trim(), StringComparison.OrdinalIgnoreCase))
+                    correctAnswers++;
+                }
+            }
+            else
+            {
+                if (selectedAnswers.TryGetValue(i, out var selectedIndices))
+                {
+                    var correctIndices = GetCorrectAnswerIndices(question);
+                    if (question.QuestionType == "Single")
                     {
-                        correctAnswers++;
+                        if (selectedIndices.Count == 1 && correctIndices.Contains(selectedIndices[0]))
+                        {
+                            correctAnswers++;
+                        }
+                    }
+                    else if (question.QuestionType == "Multiple")
+                    {
+                        if (selectedIndices.Count > 0 && selectedIndices.All(x => correctIndices.Contains(x)) &&
+                            selectedIndices.Count == correctIndices.Count)
+                        {
+                            correctAnswers++;
+                        }
                     }
                 }
             }
         }
 
         int score = (int)Math.Round((double)correctAnswers / test.Questions.Count * 100);
+        var timeSpent = DateTime.UtcNow - startTime;
 
-        var now = DateTime.UtcNow.AddHours(3);
         var result = new TestResult
         {
             TestId = testId,
             StudentId = studentId,
             Score = score,
-            DateTaken = now.ToString("yyyy-MM-dd"),
-            TimeTaken = now.ToString("HH:mm:ss")
+            DateTaken = DateTime.UtcNow.AddHours(3).ToString("yyyy-MM-dd"),
+            TimeTaken = timeSpent.ToString(@"hh\:mm\:ss")
         };
 
         DbContext.TestResults.Add(result);
         await DbContext.SaveChangesAsync();
 
         Navigation.NavigateTo($"/test_result/{result.Id}/{studentId}");
+    }
+
+    private List<int> GetCorrectAnswerIndices(QuestionModel question)
+    {
+        var correctAnswers = question.CorrectAnswer.Split('|');
+        var options = question.AnswerOptionsList;
+        var indices = new List<int>();
+        
+        for (int i = 0; i < options.Count; i++)
+        {
+            if (correctAnswers.Any(c => string.Equals(c.Trim(), options[i].Trim(), StringComparison.OrdinalIgnoreCase)))
+            {
+                indices.Add(i);
+            }
+        }
+        
+        return indices;
+    }
+
+    private string GetQuestionTypeDisplayName(string questionType)
+    {
+        return questionType switch
+        {
+            "Single" => "Один ответ",
+            "Multiple" => "Несколько ответов",
+            "Text" => "Текстовый ответ",
+            _ => questionType
+        };
+    }
+
+    private async void UpdateTime(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        timeRemaining = testDuration - (DateTime.UtcNow - startTime);
+
+        if (timeRemaining <= TimeSpan.Zero && !isTimeOver)
+        {
+            isTimeOver = true;
+            countdownTimer?.Stop();
+
+            await InvokeAsync(async () =>
+            {
+                await FinishTest();
+                StateHasChanged();
+            });
+        }
+        else
+        {
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    public void Dispose()
+    {
+        countdownTimer?.Dispose();
     }
 }

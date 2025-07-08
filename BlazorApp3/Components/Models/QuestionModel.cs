@@ -4,8 +4,14 @@ using System.ComponentModel.DataAnnotations;
 
 public class QuestionModel
 {
+    
     public int Id { get; set; }
 
+    [Required]
+    [Column("question_type")]
+    public string QuestionType { get; set; } = string.Empty; // Single | Multiple | Text
+
+    
     [Required]
     [Column("question_text")] // Явно указываем имя столбца
     public string QuestionText { get; set; } = string.Empty;
@@ -32,4 +38,6 @@ public class QuestionModel
     [Column("test_id")] // Явно указываем имя столбца
     public int TestId { get; set; }
     public TestModel? Test { get; set; }
+    
+    
 }

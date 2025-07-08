@@ -430,6 +430,7 @@
 }
 
 <!-- Модальное окно вопроса -->
+<!-- Модальное окно вопроса -->
 @if (showQuestionModal)
 {
 <div class="modal">
@@ -444,14 +445,43 @@
                     <label>Текст вопроса:</label>
                     <InputText class="form-control" @bind-Value="currentQuestion.QuestionText" />
                 </div>
+
+                <div class="form-group mb-3">
+                    <label>Тип вопроса:</label>
+                    <select class="form-select" @bind="currentQuestion.QuestionType">
+                        <option value="Single">Один правильный ответ</option>
+                        <option value="Multiple">Несколько правильных ответов</option>
+                        <option value="Text">Ответ — текстовое поле</option>
+                    </select>
+                </div>
+
                 <div class="form-group mb-3">
                     <label>Варианты ответов (разделяйте символом |):</label>
-                    <textarea class="form-control" rows="4" @bind="optionsText"></textarea>
+                    <textarea class="form-control" rows="4" @bind="optionsText" 
+                              disabled="@(currentQuestion.QuestionType == "Text")"></textarea>
                 </div>
-                <div class="form-group mb-3">
-                    <label>Правильный ответ:</label>
-                    <InputText class="form-control" @bind-Value="currentQuestion.CorrectAnswer" />
-                </div>
+
+                @if (currentQuestion.QuestionType == "Single")
+                {
+                    <div class="form-group mb-3">
+                        <label>Правильный ответ:</label>
+                        <InputText class="form-control" @bind-Value="currentQuestion.CorrectAnswer" />
+                    </div>
+                }
+                else if (currentQuestion.QuestionType == "Multiple")
+                {
+                    <div class="form-group mb-3">
+                        <label>Правильные ответы (через |):</label>
+                        <InputText class="form-control" @bind-Value="currentQuestion.CorrectAnswer" />
+                    </div>
+                }
+                else if (currentQuestion.QuestionType == "Text")
+                {
+                    <div class="form-group mb-3">
+                        <label>Правильный текст ответа:</label>
+                        <InputText class="form-control" @bind-Value="currentQuestion.CorrectAnswer" />
+                    </div>
+                }
             </div>
             <div class="modal-footer">
                 <button class="btn btn-primary" @onclick="SaveQuestion">Сохранить</button>
@@ -463,239 +493,245 @@
 }
 
 @code {
-[Parameter]
-[SupplyParameterFromQuery(Name = "subject")]
-public string CurrentSubject { get; set; } = string.Empty;
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "subject")]
+    public string CurrentSubject { get; set; } = string.Empty;
 
-private List<TestModel> testsList = new();
-private TestModel newTest = new();
-private TestModel? selectedTest;
-private QuestionModel currentQuestion = new();
-private string optionsText = string.Empty;
-private bool isLoading = true;
-private bool showAddTestModal = false;
-private bool showTestDetailsModal = false;
-private bool showEditTestModal = false;
-private bool showDeleteTestModal = false;
-private bool showQuestionModal = false;
-private bool isEditingQuestion = false;
+    private List<TestModel> testsList = new();
+    private TestModel newTest = new();
+    private TestModel? selectedTest;
+    private QuestionModel currentQuestion = new();
+    private string optionsText = string.Empty;
+    private bool isLoading = true;
+    private bool showAddTestModal = false;
+    private bool showTestDetailsModal = false;
+    private bool showEditTestModal = false;
+    private bool showDeleteTestModal = false;
+    private bool showQuestionModal = false;
+    private bool isEditingQuestion = false;
 
-protected override async Task OnInitializedAsync()
-{
-if (string.IsNullOrEmpty(CurrentSubject))
-{
-var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
-var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
-CurrentSubject = query["subject"] ?? string.Empty;
-}
+    protected override async Task OnInitializedAsync()
+    {
+        if (string.IsNullOrEmpty(CurrentSubject))
+        {
+            var uri = Navigation.ToAbsoluteUri(Navigation.Uri);
+            var query = System.Web.HttpUtility.ParseQueryString(uri.Query);
+            CurrentSubject = query["subject"] ?? string.Empty;
+        }
+        if (!string.IsNullOrEmpty(CurrentSubject))
+        {
+            await LoadTests();
+        }
+        isLoading = false;
+    }
 
-if (!string.IsNullOrEmpty(CurrentSubject))
-{
-await LoadTests();
-}
+    private async Task LoadTests()
+    {
+        try
+        {
+        testsList = await DbContext.Tests
+            .Include(t => t.Questions)
+            .Where(t => t.Subject == CurrentSubject)
+            .OrderBy(t => t.Title)
+            .ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка загрузки тестов: {ex.Message}");
+        }
+    }
 
-isLoading = false;
-}
+    private void OpenAddTestModal()
+    {
+        newTest = new TestModel { Subject = CurrentSubject };
+        showAddTestModal = true;
+    }
 
-private async Task LoadTests()
-{
-try
-{
-testsList = await DbContext.Tests
-.Include(t => t.Questions)
-.Where(t => t.Subject == CurrentSubject)
-.OrderBy(t => t.Title)
-.ToListAsync();
-}
-catch (Exception ex)
-{
-Console.WriteLine($"Ошибка загрузки тестов: {ex.Message}");
-}
-}
+    private void CloseAddTestModal()
+    {
+        showAddTestModal = false;
+        newTest = new TestModel();
+    }
 
-private void OpenAddTestModal()
-{
-newTest = new TestModel { Subject = CurrentSubject };
-showAddTestModal = true;
-}
+    private async Task SaveTest()
+    {
+        if (string.IsNullOrWhiteSpace(newTest.Title))
+        {
+            return;
+        }
+        try
+        {
+            DbContext.Tests.Add(newTest);
+            await DbContext.SaveChangesAsync();
+            await LoadTests();
+            CloseAddTestModal();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при сохранении теста: {ex.Message}");
+        }
+    }
 
-private void CloseAddTestModal()
-{
-showAddTestModal = false;
-newTest = new TestModel();
-}
+    private void OpenTestDetailsModal(TestModel test)
+    {
+        selectedTest = test;
+        showTestDetailsModal = true;
+    }
 
-private async Task SaveTest()
-{
-if (string.IsNullOrWhiteSpace(newTest.Title))
-{
-return;
-}
+    private void CloseTestDetailsModal()
+    {
+        showTestDetailsModal = false;
+        selectedTest = null;
+    }
 
-try
-{
-DbContext.Tests.Add(newTest);
-await DbContext.SaveChangesAsync();
-await LoadTests();
-CloseAddTestModal();
-}
-catch (Exception ex)
-{
-Console.WriteLine($"Ошибка при сохранении теста: {ex.Message}");
-}
-}
+    private void OpenEditTestModal(TestModel test)
+    {
+        selectedTest = test;
+        showEditTestModal = true;
+    }
 
-private void OpenTestDetailsModal(TestModel test)
-{
-selectedTest = test;
-showTestDetailsModal = true;
-}
+    private void CloseEditTestModal()
+    {
+        showEditTestModal = false;
+        selectedTest = null;
+    }
 
-private void CloseTestDetailsModal()
-{
-showTestDetailsModal = false;
-selectedTest = null;
-}
+    private async Task SaveTestChanges()
+    {
+        try
+        {
+            await DbContext.SaveChangesAsync();
+            await LoadTests();
+            CloseEditTestModal();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при сохранении изменений: {ex.Message}");
+        }
+    }
 
-private void OpenEditTestModal(TestModel test)
-{
-selectedTest = test;
-showEditTestModal = true;
-}
+    private void OpenDeleteTestModal(TestModel test)
+    {
+        selectedTest = test;
+        showDeleteTestModal = true;
+    }
 
-private void CloseEditTestModal()
-{
-showEditTestModal = false;
-selectedTest = null;
-}
+    private void CloseDeleteTestModal()
+    {
+        showDeleteTestModal = false;
+        selectedTest = null;
+    }
 
-private async Task SaveTestChanges()
-{
-try
-{
-await DbContext.SaveChangesAsync();
-await LoadTests();
-CloseEditTestModal();
-}
-catch (Exception ex)
-{
-Console.WriteLine($"Ошибка при сохранении изменений: {ex.Message}");
-}
-}
+    private async Task DeleteTest()
+    {
+        if (selectedTest == null) return;
 
-private void OpenDeleteTestModal(TestModel test)
-{
-selectedTest = test;
-showDeleteTestModal = true;
-}
+        try
+        {
+            DbContext.Questions.RemoveRange(selectedTest.Questions);
+            DbContext.Tests.Remove(selectedTest);
+            await DbContext.SaveChangesAsync();
+            await LoadTests();
+            CloseDeleteTestModal();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при удалении теста: {ex.Message}");
+        }
+    }
 
-private void CloseDeleteTestModal()
-{
-showDeleteTestModal = false;
-selectedTest = null;
-}
+    private void OpenAddQuestionModal()
+    {
+        currentQuestion = new QuestionModel { QuestionType = "Single" }; // По умолчанию один ответ
+        optionsText = string.Empty;
+        isEditingQuestion = false;
+        showQuestionModal = true;
+    }
 
-private async Task DeleteTest()
-{
-if (selectedTest == null) return;
+    private void OpenEditQuestionModal(QuestionModel question)
+    {
+        currentQuestion = new QuestionModel
+        {
+            Id = question.Id,
+            QuestionText = question.QuestionText,
+            AnswerOptions = question.AnswerOptions,
+            CorrectAnswer = question.CorrectAnswer,
+            TestId = question.TestId,
+            QuestionType = question.QuestionType
+        };
+        optionsText = question.AnswerOptions.Replace("|", "\n");
+        isEditingQuestion = true;
+        showQuestionModal = true;
+    }
 
-try
-{
-DbContext.Questions.RemoveRange(selectedTest.Questions);
-DbContext.Tests.Remove(selectedTest);
-await DbContext.SaveChangesAsync();
-await LoadTests();
-CloseDeleteTestModal();
-}
-catch (Exception ex)
-{
-Console.WriteLine($"Ошибка при удалении теста: {ex.Message}");
-}
-}
+    private void CloseQuestionModal()
+    {
+        showQuestionModal = false;
+        currentQuestion = new QuestionModel();
+        optionsText = string.Empty;
+    }
 
-private void OpenAddQuestionModal()
-{
-currentQuestion = new QuestionModel();
-optionsText = string.Empty;
-isEditingQuestion = false;
-showQuestionModal = true;
-}
+    private async Task SaveQuestion()
+    {
+        if (selectedTest == null) return;
 
-private void OpenEditQuestionModal(QuestionModel question)
-{
-currentQuestion = new QuestionModel
-{
-Id = question.Id,
-QuestionText = question.QuestionText,
-AnswerOptions = question.AnswerOptions,
-CorrectAnswer = question.CorrectAnswer,
-TestId = question.TestId
-};
-optionsText = question.AnswerOptions.Replace("|", "\n");
-isEditingQuestion = true;
-showQuestionModal = true;
-}
+        if (currentQuestion.QuestionType != "Text")
+        {
+            currentQuestion.AnswerOptions = optionsText.Replace("\r", "").Replace("\n", "|");
+        }
+        else
+        {
+            currentQuestion.AnswerOptions = string.Empty;
+        }
 
-private void CloseQuestionModal()
-{
-showQuestionModal = false;
-currentQuestion = new QuestionModel();
-optionsText = string.Empty;
-}
+        try
+        {
+            if (isEditingQuestion)
+            {
+                var existing = selectedTest.Questions.FirstOrDefault(q => q.Id == currentQuestion.Id);
+                if (existing != null)
+                {
+                    existing.QuestionText = currentQuestion.QuestionText;
+                    existing.AnswerOptions = currentQuestion.AnswerOptions;
+                    existing.CorrectAnswer = currentQuestion.CorrectAnswer;
+                    existing.QuestionType = currentQuestion.QuestionType;
+                }
+            }
+            else
+            {
+                currentQuestion.TestId = selectedTest.Id;
+                selectedTest.Questions.Add(currentQuestion);
+            }
 
-private async Task SaveQuestion()
-{
-if (selectedTest == null) return;
+            await DbContext.SaveChangesAsync();
+            CloseQuestionModal();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при сохранении вопроса: {ex.Message}");
+        }
+    }
 
-currentQuestion.AnswerOptions = optionsText.Replace("\r", "").Replace("\n", "|");
+    private async Task DeleteQuestion(QuestionModel question)
+    {
+        if (selectedTest == null) return;
 
-try
-{
-if (isEditingQuestion)
-{
-var existing = selectedTest.Questions.FirstOrDefault(q => q.Id == currentQuestion.Id);
-if (existing != null)
-{
-existing.QuestionText = currentQuestion.QuestionText;
-existing.AnswerOptions = currentQuestion.AnswerOptions;
-existing.CorrectAnswer = currentQuestion.CorrectAnswer;
-}
-}
-else
-{
-currentQuestion.TestId = selectedTest.Id;
-selectedTest.Questions.Add(currentQuestion);
-}
+        try
+        {
+            selectedTest.Questions.Remove(question);
+            DbContext.Questions.Remove(question);
+            await DbContext.SaveChangesAsync();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка при удалении вопроса: {ex.Message}");
+        }
+    }
 
-await DbContext.SaveChangesAsync();
-CloseQuestionModal();
-StateHasChanged();
-}
-catch (Exception ex)
-{
-Console.WriteLine($"Ошибка при сохранении вопроса: {ex.Message}");
-}
-}
-
-private async Task DeleteQuestion(QuestionModel question)
-{
-if (selectedTest == null) return;
-
-try
-{
-selectedTest.Questions.Remove(question);
-DbContext.Questions.Remove(question);
-await DbContext.SaveChangesAsync();
-StateHasChanged();
-}
-catch (Exception ex)
-{
-Console.WriteLine($"Ошибка при удалении вопроса: {ex.Message}");
-}
-}
-
-private void NavigateToTeacherMain()
-{
-Navigation.NavigateTo($"/teacher_main?subject={Uri.EscapeDataString(CurrentSubject)}");
-}
+    private void NavigateToTeacherMain()
+    {
+        Navigation.NavigateTo($"/teacher_main?subject={Uri.EscapeDataString(CurrentSubject)}");
+    }
 }
